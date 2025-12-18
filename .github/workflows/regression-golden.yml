@@ -1,0 +1,58 @@
+name: Golden Suite Regression
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  golden-suite:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install tsx (TypeScript runner)
+        run: npm install --save-dev tsx
+
+      - name: Run golden suite
+        id: golden
+        run: |
+          npx tsx spine/regression/cli/runGolden.ts \
+            --outDir .regression-out \
+            --format both \
+            --failOn critical
+        continue-on-error: true
+
+      - name: Upload golden report JSON
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-report-json
+          path: .regression-out/golden_report.json
+          retention-days: 7
+
+      - name: Upload golden summary Markdown
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: golden-summary-md
+          path: .regression-out/golden_summary.md
+          retention-days: 7
+
+      - name: Fail if drift detected
+        if: steps.golden.outcome == 'failure'
+        run: |
+          echo "Golden suite detected drift. Check artifacts for details."
+          exit 1
