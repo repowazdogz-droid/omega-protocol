@@ -79,3 +79,4 @@ export function getCardsByType(board: ThoughtBoard): Map<ThoughtCardType, Though
 
 
 
+

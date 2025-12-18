@@ -131,3 +131,4 @@ export default function PermissionRequestCard({ scope, scopeLabel, onRequest }: 
 
 
 
+
