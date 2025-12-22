@@ -213,7 +213,7 @@ describe('SafeLandingKernel', () => {
   });
 
   describe('Disallow Rules', () => {
-    test('S1 disallowed if H4', () => {
+    test('H4 triggers override to S4 (override-first semantics)', () => {
       const input: SafeLandingInput = {
         altitudeBand: AltitudeBand.A1,
         healthStatus: HealthStatus.H4,
@@ -223,10 +223,11 @@ describe('SafeLandingKernel', () => {
       };
 
       const result = kernel.run(input);
-      expect(result.decision.outcome).toBe('DISALLOWED');
+      // With override-first semantics, H4 should map to S4 via policy (not DISALLOWED)
+      expect(result.decision.outcome).toBe(SafeLandingOutcome.S4);
     });
 
-    test('S1 disallowed if E4', () => {
+    test('E4 triggers override to S4 (override-first semantics)', () => {
       const input: SafeLandingInput = {
         altitudeBand: AltitudeBand.A1,
         healthStatus: HealthStatus.H1,
@@ -236,7 +237,9 @@ describe('SafeLandingKernel', () => {
       };
 
       const result = kernel.run(input);
-      expect(result.decision.outcome).toBe('DISALLOWED');
+      // With override-first semantics, E4 override should win (S4), not DISALLOWED
+      expect(result.decision.outcome).toBe(SafeLandingOutcome.S4);
+      expect(result.decision.overridesApplied).toContain('Environment');
     });
   });
 });

@@ -6,7 +6,7 @@
  * Version: 0.1
  */
 
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import { InMemoryLearningStore } from "../InMemoryLearningStore";
 import { StoredSessionRecord, StoredLearnerState } from "../StoreTypes";
 import { AgeBand } from "../../LearnerTypes";

@@ -69,15 +69,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Build orchestrator input
+    const policyPackIdRaw = globalPolicyPackId;
+    const policyPackId = (typeof policyPackIdRaw === "string" && policyPackIdRaw.length > 0)
+      ? (policyPackIdRaw as any)
+      : undefined;
+    
     const orchestratorInput: OrchestratorInput = {
       graphSpec: {
         graphId: graphSpec.graphId,
-        nodes: graphSpec.nodes,
+        nodes: graphSpec.nodes.map(node => ({
+          ...node,
+          ...(node.policyPackId ? { policyPackId: node.policyPackId as any } : {})
+        })),
         maxSteps: graphSpec.maxSteps || 25,
         contractVersion: CONTRACT_VERSION
       },
       inputBag,
-      globalPolicyPackId: globalPolicyPackId as any,
+      ...(policyPackId ? { globalPolicyPackId: policyPackId } : {}),
       runMeta: {
         sessionId,
         learnerId,

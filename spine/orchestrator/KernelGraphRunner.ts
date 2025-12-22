@@ -18,6 +18,8 @@ import { hashString } from '../learning/platform/session/hash';
 import { extractTraceHighlights } from './TraceHighlighting';
 import { getClaimDescriptor, listClaims } from '../claims/ClaimRegistry';
 import { kernelToThoughtObjects } from '../kernels/surfaces/learning/KernelToThoughtObjects';
+import { mergeOmegaMeta } from '../llm/modes/omegaMerge';
+import type { OmegaMeta } from '../llm/modes/OmegaMeta';
 
 /**
  * Runs a kernel graph.
@@ -47,11 +49,16 @@ export function runGraph(input: OrchestratorInput): OrchestratorRun {
   // Run nodes in order
   const nodeResults: OrchestratorNodeResult[] = [];
   const allPolicyNotes: string[] = [];
+  let omega: OmegaMeta | undefined = undefined;
 
   for (const nodeSpec of nodesToProcess) {
     const nodeResult = runNode(nodeSpec, inputBag, globalPolicyPack);
     nodeResults.push(nodeResult);
     allPolicyNotes.push(...nodeResult.policyNotes);
+    // Merge omega from node result if present (extracted from underlying KernelResult)
+    if (nodeResult.omega) {
+      omega = mergeOmegaMeta(omega, nodeResult.omega);
+    }
   }
 
   // Extract trace highlights
@@ -81,7 +88,8 @@ export function runGraph(input: OrchestratorInput): OrchestratorRun {
       type: h.type
     })),
     terminalOutcome,
-    terminalNodeId
+    terminalNodeId,
+    omega
   };
 }
 
@@ -131,7 +139,7 @@ function runNode(
       timestamp: kernelInput.timestamp,
       signals: kernelInput.signals,
       uncertainty: kernelInput.uncertainty,
-      overrides: kernelInput.overrides || {}
+      overrides: (kernelInput.overrides || {}) as Record<string, string | number | boolean>
     },
     decision: {
       contractVersion: CONTRACT_VERSION,
@@ -243,7 +251,8 @@ function runNode(
     nodeId: nodeSpec.nodeId,
     runRecord,
     policyNotes: [...nodePolicyNotes, ...globalPolicyNotes].slice(0, 3), // Bounded max 3
-    thoughtObjects
+    thoughtObjects,
+    omega: result.omega // Pass through omega from KernelResult if present
   };
 }
 

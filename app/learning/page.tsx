@@ -305,6 +305,18 @@ export default function LearningPage() {
     }
   }, [router])
 
+  const loadSkills = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/learning/skills?learnerId=${learnerId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setSkills(data)
+      }
+    } catch (err) {
+      // Silently fail
+    }
+  }, [learnerId])
+
   // Auto-start first session when context is loaded
   useEffect(() => {
     if (context && !autoStarted && conversationHistory.length === 0 && styleProfile) {
@@ -379,6 +391,12 @@ export default function LearningPage() {
     }
   }, [context, autoStarted, conversationHistory.length, sessionId, learnerId, styleProfile, loadSkills])
 
+  useEffect(() => {
+    if (styleProfile?.showSkillsPanel && learnerId) {
+      loadSkills()
+    }
+  }, [styleProfile?.showSkillsPanel, learnerId, loadSkills])
+
   const handleSend = async (utteranceText?: string, isAutoStart = false) => {
     if (!context || !styleProfile) return
     
@@ -451,7 +469,7 @@ export default function LearningPage() {
             content: text,
             source: 'learner',
             timestamp: new Date().toISOString(),
-            relatedStepId: pathProgress?.currentStepId
+            relatedStepId: pathProgress?.currentStepIndex !== undefined ? String(pathProgress.currentStepIndex) : undefined
           }
           setLearningBoard(addThoughtObject(learningBoard, attemptObj))
         }
@@ -479,7 +497,7 @@ export default function LearningPage() {
         let updatedBoard = learningBoard
         
         // Extract questions
-        const questions = tutorMessage.split(/[.!?]+/).filter(s => s.trim().endsWith('?'))
+        const questions = tutorMessage.split(/[.!?]+/).filter((s: string) => s.trim().endsWith('?'))
         if (questions.length > 0) {
           const questionObj: ThoughtObject = {
             id: `obj-${Date.now()}-q`,
@@ -487,14 +505,14 @@ export default function LearningPage() {
             content: questions[0].trim(),
             source: 'tutor',
             timestamp: new Date().toISOString(),
-            relatedStepId: pathProgress?.currentStepId
+            relatedStepId: pathProgress?.currentStepIndex !== undefined ? String(pathProgress.currentStepIndex) : undefined
           }
           updatedBoard = addThoughtObject(updatedBoard, questionObj)
         }
         
         // Extract hints
         const hintKeywords = ['hint', 'try', 'consider', 'think about', 'remember']
-        const hintSentences = tutorMessage.split(/[.!?]+/).filter(s =>
+        const hintSentences = tutorMessage.split(/[.!?]+/).filter((s: string) =>
           hintKeywords.some(kw => s.toLowerCase().includes(kw))
         )
         if (hintSentences.length > 0) {
@@ -504,14 +522,14 @@ export default function LearningPage() {
             content: hintSentences[0].trim(),
             source: 'tutor',
             timestamp: new Date().toISOString(),
-            relatedStepId: pathProgress?.currentStepId
+            relatedStepId: pathProgress?.currentStepIndex !== undefined ? String(pathProgress.currentStepIndex) : undefined
           }
           updatedBoard = addThoughtObject(updatedBoard, hintObj)
         }
         
         // Extract examples
         const exampleKeywords = ['example', 'for instance', 'like', 'such as']
-        const exampleSentences = tutorMessage.split(/[.!?]+/).filter(s =>
+        const exampleSentences = tutorMessage.split(/[.!?]+/).filter((s: string) =>
           exampleKeywords.some(kw => s.toLowerCase().includes(kw))
         )
         if (exampleSentences.length > 0) {
@@ -521,7 +539,7 @@ export default function LearningPage() {
             content: exampleSentences[0].trim(),
             source: 'tutor',
             timestamp: new Date().toISOString(),
-            relatedStepId: pathProgress?.currentStepId
+            relatedStepId: pathProgress?.currentStepIndex !== undefined ? String(pathProgress.currentStepIndex) : undefined
           }
           updatedBoard = addThoughtObject(updatedBoard, exampleObj)
         }
@@ -535,7 +553,7 @@ export default function LearningPage() {
             source: 'tutor',
             timestamp: new Date().toISOString(),
             confidence: 'unknown',
-            relatedStepId: pathProgress?.currentStepId
+            relatedStepId: pathProgress?.currentStepIndex !== undefined ? String(pathProgress.currentStepIndex) : undefined
           }
           updatedBoard = addThoughtObject(updatedBoard, uncertaintyObj)
         }
@@ -697,18 +715,6 @@ export default function LearningPage() {
       }
     }
   }
-
-  const loadSkills = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/learning/skills?learnerId=${learnerId}`)
-      if (response.ok) {
-        const data = await response.json()
-        setSkills(data)
-      }
-    } catch (err) {
-      // Silently fail
-    }
-  }, [learnerId])
 
   const handleNewSession = () => {
     router.push('/learning/start')

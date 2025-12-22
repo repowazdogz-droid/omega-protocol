@@ -4,16 +4,17 @@
  * Tests that LLM endpoints return LLM_DISABLED when feature flag is off.
  */
 
+import { describe, it, expect, vi } from 'vitest';
 import { POST as specDraftPOST } from '../specDraft/route';
 import { POST as explainPOST } from '../explain/route';
 import { NextRequest } from 'next/server';
 
 // Mock the config
-jest.mock('../../../../../spine/llm/config/GeminiConfig', () => ({
-  isGeminiEnabled: jest.fn(() => false),
-  getGeminiApiKey: jest.fn(() => undefined),
-  getGeminiModel: jest.fn(() => 'gemini-3-flash'),
-  getGeminiBaseUrl: jest.fn(() => 'https://generativelanguage.googleapis.com/v1beta')
+vi.mock('spine/llm/config/GeminiConfig', () => ({
+  isGeminiEnabled: vi.fn(() => false),
+  getGeminiApiKey: vi.fn(() => undefined),
+  getGeminiModel: vi.fn(() => 'gemini-3-flash'),
+  getGeminiBaseUrl: vi.fn(() => 'https://generativelanguage.googleapis.com/v1beta')
 }));
 
 describe('LLM Disabled', () => {

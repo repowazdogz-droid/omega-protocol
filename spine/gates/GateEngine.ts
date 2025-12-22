@@ -46,8 +46,9 @@ export function evaluateGate(action: GateAction, ctx: GateContext): GateDecision
   // 4. Surface bounds (max trace nodes, max items)
   const surfaceBounds = checkSurfaceBounds(action, ctx);
 
-  // Merge constraints
+  // Merge constraints (preserve nonNegotiable constraints like redactFields)
   const constraints: GateConstraints = {
+    ...nonNegotiable.constraints,
     ...comfortConstraints,
     ...surfaceBounds,
     ...consentCheck.constraints

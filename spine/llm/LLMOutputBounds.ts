@@ -56,7 +56,7 @@ export function safeJsonParse<T>(text: string): { ok: boolean; data?: T; error?:
     cleaned = lines.join('\n').trim();
   }
 
-  // Remove common boilerplate
+  // Remove common boilerplate (but preserve JSON structure)
   const boilerplatePatterns = [
     /I can't access the repo/gi,
     /I don't have access/gi,
@@ -68,9 +68,15 @@ export function safeJsonParse<T>(text: string): { ok: boolean; data?: T; error?:
   for (const pattern of boilerplatePatterns) {
     cleaned = cleaned.replace(pattern, '');
   }
+  
+  // Try to extract JSON if text contains "JSON:" or similar markers
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    cleaned = jsonMatch[0];
+  }
 
   try {
-    const data = JSON.parse(cleaned) as T;
+    const data = JSON.parse(cleaned.trim()) as T;
     return { ok: true, data };
   } catch (error: any) {
     return { ok: false, error: error.message || 'JSON parse failed' };

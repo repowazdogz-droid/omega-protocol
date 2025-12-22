@@ -111,7 +111,9 @@ export async function POST(request: NextRequest) {
         timestamp: kernelInput.timestamp,
         signals: kernelInput.signals,
         uncertainty: kernelInput.uncertainty,
-        overrides: kernelInput.overrides || {},
+        overrides: Object.fromEntries(
+          Object.entries(kernelInput.overrides || {}).filter(([_, v]) => v !== undefined)
+        ) as Record<string, string | number | boolean>,
         sessionId,
         learnerId
       },
@@ -214,13 +216,15 @@ export async function POST(request: NextRequest) {
         type: claim.type,
         text: claim.statement
       })),
-      trace: finalRun.trace.nodes.map(node => ({
-        id: node.id,
-        type: node.type,
-        label: node.label,
-        description: node.description || '',
-        timestamp: node.timestamp
-      }))
+      trace: finalRun.trace.nodes
+        .filter(node => node.type !== 'Summary')
+        .map(node => ({
+          id: node.id,
+          type: node.type as "Input" | "Policy" | "Override" | "Decision" | "Claim" | "Error",
+          label: node.label || '',
+          description: node.description || '',
+          timestamp: node.timestamp
+        }))
     };
 
     // Persist if requested and learnerId provided

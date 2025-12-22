@@ -9,6 +9,7 @@ import { CONTRACT_VERSION } from '../../contracts/ContractVersion';
 
 describe('Artifact Verifier', () => {
   test('rejects missing contract version', () => {
+    // Pass payloads without contractVersion at all (not even in meta)
     const result = verifyArtifactBundle(ArtifactKind.XR_BUNDLE, {}, {});
 
     expect(result.ok).toBe(false);

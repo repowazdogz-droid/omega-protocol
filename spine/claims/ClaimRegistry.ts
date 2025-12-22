@@ -237,7 +237,11 @@ export function listClaims(options?: { domain?: string }): ClaimDescriptor[] {
     return allClaims;
   }
   
-  return allClaims.filter(claim => claim.domains.includes(options.domain));
+  const domain = options.domain;
+  if (!domain) {
+    return allClaims;
+  }
+  return allClaims.filter(claim => claim.domains.includes(domain));
 }
 
 /**

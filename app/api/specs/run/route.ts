@@ -91,16 +91,44 @@ export async function POST(request: NextRequest) {
         contractVersion: CONTRACT_VERSION,
         timestamp: kernelInput.timestamp,
         signals: kernelInput.signals,
-        uncertainty: Object.keys(kernelInput.uncertainty || {}).map(key => ({
-          signalKey: key,
-          reason: 'Unknown',
-          level: 'medium' as const
-        })),
+        uncertainty: Object.keys(kernelInput.uncertainty || {}).reduce((acc, key) => {
+          acc[key] = true;
+          return acc;
+        }, {} as Record<string, boolean>),
         sessionId,
         learnerId
       },
-      decision,
-      trace,
+      decision: {
+        ...decision,
+        contractVersion: CONTRACT_VERSION,
+        kernelId: spec.kernelId,
+        adapterId: compiledId
+      },
+      trace: {
+        contractVersion: CONTRACT_VERSION,
+        traceId: trace.traceId,
+        nodes: trace.nodes.map((n: any) => ({
+          id: n.id,
+          parentId: n.parentId,
+          type: n.type,
+          label: n.label || "",
+          description: n.description || "",
+          timestamp: n.timestamp,
+          data: n.data,
+          children: n.children,
+          level: n.level ?? 0
+        })),
+        claims: trace.claims.map((c: any) => ({
+          contractVersion: CONTRACT_VERSION,
+          claimId: c.claimId || hashString(c.statement || ""),
+          type: c.type,
+          statement: c.statement || "",
+          evidence: c.evidence || [],
+          confidence: c.confidence || "Unknown"
+        })),
+        summary: trace.summary || "",
+        kernelVersion: spec.version || "1.0.0"
+      },
       createdAtIso: new Date().toISOString(),
       inputHash: hashString(JSON.stringify(kernelInput))
     };
@@ -138,13 +166,15 @@ export async function POST(request: NextRequest) {
           type: claim.type,
           text: claim.statement
         })),
-        trace: finalRun.trace.nodes.map(node => ({
-          id: node.id,
-          type: node.type,
-          label: node.label,
-          description: node.description || '',
-          timestamp: node.timestamp
-        }))
+        trace: finalRun.trace.nodes
+          .filter((node: any) => node.type !== 'Summary')
+          .map((node: any) => ({
+            id: node.id,
+            type: node.type as "Input" | "Policy" | "Override" | "Decision" | "Claim" | "Error",
+            label: node.label || '',
+            description: node.description || '',
+            timestamp: node.timestamp
+          }))
       };
 
       const store = getStore();

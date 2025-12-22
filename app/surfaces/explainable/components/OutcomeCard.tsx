@@ -71,3 +71,10 @@ export default function OutcomeCard({ model, calmMode = true }: OutcomeCardProps
 
 
 
+
+
+
+
+
+
+

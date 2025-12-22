@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react';
 import { SPACING, TEXT_SIZES } from '../../../ui/uiTokens';
-import UiCard from '../../../ui/UiCard';
+import { UiCard } from '@/app/ui';
 import { ShareScope } from '../../../../spine/share/ShareTypes';
 
 const spacing = SPACING.standard;

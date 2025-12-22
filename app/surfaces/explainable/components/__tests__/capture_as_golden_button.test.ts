@@ -67,3 +67,10 @@ describe('CaptureAsGoldenButton helpers', () => {
 
 
 
+
+
+
+
+
+
+

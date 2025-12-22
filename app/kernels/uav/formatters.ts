@@ -7,7 +7,7 @@
  * Version: 0.1
  */
 
-import { KernelRunRecord, BoundedTraceNode } from '../../../../spine/kernels/surfaces/learning/KernelSurfaceTypes';
+import { KernelRunRecord, BoundedTraceNode } from '@spine/kernels/surfaces/learning/KernelSurfaceTypes';
 import { UAVPreset } from './presets';
 
 const MAX_CLAIM_LENGTH = 80;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { generateTeacherRecapData } from '../../teacher/TeacherMomentEngine';
+import { generateTeacherRecapData } from '../../../learning/teacher/TeacherMomentEngine';
 import { evaluateGate } from '../../../../spine/gates/GateEngine';
 import { GateAction, ViewerRole, Surface, ConsentState } from '../../../../spine/gates/GateTypes';
 import { getShareTokenStore } from '../../../../spine/share/ShareTokenStore';
@@ -142,14 +142,14 @@ export async function GET(request: NextRequest) {
     const redactFields = gateDecision.constraints?.redactFields || [];
 
     // Apply maxItems constraint to moments/prompts/plan if present
-    if (maxItems && recapData.moments) {
-      recapData.moments = recapData.moments.slice(0, maxItems);
+    if (maxItems && recapData.teacherMoments) {
+      recapData.teacherMoments = recapData.teacherMoments.slice(0, maxItems);
     }
-    if (maxItems && recapData.prompts) {
-      recapData.prompts = recapData.prompts.slice(0, maxItems);
+    if (maxItems && recapData.nextPrompts) {
+      recapData.nextPrompts = recapData.nextPrompts.slice(0, maxItems);
     }
-    if (maxItems && recapData.plan) {
-      recapData.plan = recapData.plan.slice(0, maxItems);
+    if (maxItems && recapData.nextSessionPlan) {
+      recapData.nextSessionPlan = recapData.nextSessionPlan.slice(0, maxItems);
     }
 
     // Apply redactFields (remove scoring-like fields)
@@ -169,11 +169,19 @@ export async function GET(request: NextRequest) {
         }
         return obj;
       };
-      Object.keys(recapData).forEach(key => {
-        if (recapData[key]) {
-          recapData[key] = redactRecapData(recapData[key]);
-        }
-      });
+      // Redact specific fields explicitly
+      if (recapData.teacherMoments) {
+        recapData.teacherMoments = redactRecapData(recapData.teacherMoments);
+      }
+      if (recapData.nextPrompts) {
+        recapData.nextPrompts = redactRecapData(recapData.nextPrompts);
+      }
+      if (recapData.nextSessionPlan) {
+        recapData.nextSessionPlan = redactRecapData(recapData.nextSessionPlan);
+      }
+      if (recapData.summary) {
+        recapData.summary = redactRecapData(recapData.summary);
+      }
     }
 
     return NextResponse.json({

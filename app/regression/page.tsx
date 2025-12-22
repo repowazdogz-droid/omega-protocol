@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import { SPACING, TEXT_SIZES } from '../ui/uiTokens';
-import UiCard from '../ui/UiCard';
+import { UiCard } from '@/app/ui';
 import LLMHelperPanel from '../surfaces/explainable/components/LLMHelperPanel';
 import { buildRegressionDiffPayload } from '../surfaces/explainable/llmPayloadBuilder';
 

@@ -22,7 +22,8 @@ const MAX_MARKDOWN_LINES = 200;
  */
 export async function writeGoldenJsonReport(
   result: GoldenSuiteResult,
-  outDir: string
+  outDir: string,
+  opts?: { generatedAtIso?: string }
 ): Promise<string> {
   // Ensure output directory exists
   await mkdir(outDir, { recursive: true });
@@ -39,10 +40,12 @@ export async function writeGoldenJsonReport(
     findings: r.findings.slice(0, MAX_FINDINGS)
   }));
 
+  const generatedAtIso = opts?.generatedAtIso ?? new Date().toISOString();
+
   const report = {
     ...boundedResult,
     results: boundedResults,
-    generatedAt: new Date().toISOString(),
+    generatedAt: generatedAtIso,
     version: '1.0.0'
   };
 
@@ -152,11 +155,10 @@ export async function writeGoldenMarkdownSummary(
     }
   }
 
-  // Ensure we don't exceed max lines
+  // Ensure we don't exceed max lines (hard cap at 200)
   if (lines.length > MAX_MARKDOWN_LINES) {
-    lines.splice(MAX_MARKDOWN_LINES - 1);
-    lines.push('');
-    lines.push('*Report truncated (max 200 lines)*');
+    lines.splice(MAX_MARKDOWN_LINES);
+    lines[MAX_MARKDOWN_LINES - 1] = '*Report truncated (max 200 lines)*';
   }
 
   const filePath = join(outDir, 'golden_summary.md');

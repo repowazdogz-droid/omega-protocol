@@ -58,7 +58,19 @@ export async function captureArtifactAsGolden(options: {
   const { artifactId, label, runSuite = false } = options;
   const warnings: string[] = [];
 
-  // Validate artifact exists
+  // Check for duplicate FIRST (before artifact lookup to avoid unnecessary work)
+  // Dedupe by artifactId, NOT label
+  const existingSuite = await getGoldenSuite();
+  const isDuplicate = existingSuite.some(c => c.artifactId === artifactId);
+  if (isDuplicate) {
+    return {
+      ok: true,
+      added: false,
+      warnings: [`Artifact ${artifactId} already in golden suite`]
+    };
+  }
+
+  // Validate artifact exists (only if not duplicate)
   const artifact = await getArtifact(artifactId);
   if (!artifact) {
     return {
@@ -74,7 +86,7 @@ export async function captureArtifactAsGolden(options: {
     finalLabel = generateDefaultLabel(artifact.manifest.kind, artifactId);
   }
 
-  // Bound label
+  // Bound label BEFORE adding to suite
   if (finalLabel.length > MAX_LABEL_LENGTH) {
     finalLabel = finalLabel.substring(0, MAX_LABEL_LENGTH - 3) + '...';
     warnings.push(`Label truncated to ${MAX_LABEL_LENGTH} chars`);
@@ -128,7 +140,9 @@ export async function captureArtifactAsGolden(options: {
     skip: false
   });
 
+  // If addResult.ok is false, it means duplicate (we already checked above, but addGoldenCase also checks)
   if (!addResult.ok) {
+    // This should only happen if there's a race condition, but handle gracefully
     return {
       ok: true,
       added: false,
@@ -169,23 +183,39 @@ export async function captureArtifactAsGolden(options: {
 
 /**
  * Generates a deterministic default label based on artifact kind and ID.
+ * Uses last 6-8 chars of artifactId as suffix (no timestamps or random).
  */
 function generateDefaultLabel(kind: ArtifactKind, artifactId: string): string {
-  // Use short suffix of artifactId (last 8 chars)
-  const shortId = artifactId.length > 8 ? artifactId.substring(artifactId.length - 8) : artifactId;
+  // Use short suffix of artifactId (last 6-8 chars, deterministic)
+  const suffixLength = Math.min(8, Math.max(6, artifactId.length));
+  const shortId = artifactId.length > suffixLength 
+    ? artifactId.substring(artifactId.length - suffixLength) 
+    : artifactId;
   
   // Map kind to prefix
-  const kindPrefix: Record<ArtifactKind, string> = {
+  const kindPrefix: Partial<Record<ArtifactKind, string>> = {
     [ArtifactKind.XR_BUNDLE]: 'XR Bundle',
     [ArtifactKind.SESSION_RECAP]: 'Session Recap',
     [ArtifactKind.KERNEL_RUN]: 'Kernel Run',
     [ArtifactKind.ORCHESTRATOR_RUN]: 'Orchestrator Run',
     [ArtifactKind.TEACHER_RECAP]: 'Teacher Recap',
-    [ArtifactKind.TEACHER_ACCESS]: 'Teacher Access',
-    [ArtifactKind.PAIRING_BOOTSTRAP]: 'Pairing Bootstrap'
+    [ArtifactKind.CONTACT_INQUIRY]: 'Contact Inquiry',
+    [ArtifactKind.bundle]: 'Bundle',
+    [ArtifactKind.kernelRun]: 'Kernel Run',
+    [ArtifactKind.orchestratorRun]: 'Orchestrator Run',
+    [ArtifactKind.teacherAccess]: 'Teacher Access',
+    [ArtifactKind.pairing]: 'Pairing',
+    [ArtifactKind.recap]: 'Recap'
   };
 
   const prefix = kindPrefix[kind] || 'Artifact';
-  return `${prefix} ${shortId}`;
+  const fullLabel = `${prefix}:${shortId}`;
+  
+  // Ensure it's within bounds (truncate to 60 if needed)
+  if (fullLabel.length > MAX_LABEL_LENGTH) {
+    return fullLabel.substring(0, MAX_LABEL_LENGTH - 3) + '...';
+  }
+  
+  return fullLabel;
 }
 

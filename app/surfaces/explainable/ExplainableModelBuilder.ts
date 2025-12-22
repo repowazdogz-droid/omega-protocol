@@ -16,10 +16,10 @@ import {
   ExplainableTalkTrackModel,
   ExplainableModelOptions
 } from './ExplainableTypes';
-import { KernelRunRecord } from '../../../../spine/kernels/surfaces/learning/KernelSurfaceTypes';
-import { OrchestratorRun } from '../../../../spine/orchestrator/OrchestratorTypes';
-import { getClaimDescriptor, listClaims } from '../../../../spine/claims/ClaimRegistry';
-import { hashString } from '../../../../spine/learning/platform/session/hash';
+import { KernelRunRecord } from '@spine/kernels/surfaces/learning/KernelSurfaceTypes';
+import { OrchestratorRun } from '@spine/orchestrator/OrchestratorTypes';
+import { getClaimDescriptor, listClaims } from '@spine/claims/ClaimRegistry';
+import { hashString } from '@spine/learning/platform/session/hash';
 
 /**
  * Builds display model from KernelRunRecord.
@@ -156,7 +156,7 @@ function buildClaimChipsFromOrchestratorClaims(
 
   for (const claim of summaryClaims) {
     // Try to get claim descriptor from registry (for better labels)
-    const descriptor = getClaimDescriptor(claim.claimId);
+    const descriptor = getClaimDescriptor(claim.claimId as any);
     const text = descriptor?.title || claim.title || boundString(claim.claimId, 80);
     const severity = descriptor?.severity || claim.severity || 'info';
 
@@ -187,7 +187,6 @@ function buildReasoningItems(
 
   for (const node of priorityNodes) {
     const priority = node.type === 'Override' ? 100 :
-                     node.type === 'Disallow' ? 95 :
                      node.type === 'Decision' ? 80 :
                      node.type === 'Policy' ? 70 : 50;
 
@@ -272,7 +271,7 @@ function buildTalkTrackFromOrchestrator(
   audience: "learner" | "teacher" | "demo"
 ): ExplainableTalkTrackModel {
   const bullets: string[] = [];
-  const nodeCount = run.nodeRunIds?.length || 0;
+  const nodeCount = (run as any).nodeRunIds?.length || run.nodes?.length || 0;
 
   // Outcome
   bullets.push(`Graph outcome: ${run.terminalOutcome}`);
@@ -282,7 +281,7 @@ function buildTalkTrackFromOrchestrator(
 
   // Top claims (max 2)
   for (const claim of run.summaryClaims.slice(0, 2)) {
-    const descriptor = getClaimDescriptor(claim.claimId);
+    const descriptor = getClaimDescriptor(claim.claimId as any);
     const title = descriptor?.title || claim.title || claim.claimId;
     bullets.push(boundString(title, 200));
   }

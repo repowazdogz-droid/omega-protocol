@@ -43,13 +43,19 @@ export interface IShareTokenStore {
  * File-backed share token store implementation.
  */
 export class FileShareTokenStore implements IShareTokenStore {
-  private ensureStoreDir(): Promise<void> {
-    return fs.mkdir(STORE_ROOT, { recursive: true });
+  private storeRoot: string;
+
+  constructor(storeRoot?: string) {
+    this.storeRoot = storeRoot || STORE_ROOT;
+  }
+
+  private async ensureStoreDir(): Promise<void> {
+    await fs.mkdir(this.storeRoot, { recursive: true });
   }
 
   private getLearnerFile(learnerId: string): string {
     const learnerHash = createHash('sha256').update(learnerId).digest('hex').substring(0, 16);
-    return join(STORE_ROOT, `${learnerHash}.json`);
+    return join(this.storeRoot, `${learnerHash}.json`);
   }
 
   private async loadLearnerTokens(learnerId: string): Promise<ShareTokenRecord[]> {
@@ -140,11 +146,11 @@ export class FileShareTokenStore implements IShareTokenStore {
     // Search all learner files for the token
     // In production, this would use an index, but for dev we scan
     try {
-      const files = await fs.readdir(STORE_ROOT);
+      const files = await fs.readdir(this.storeRoot);
       const jsonFiles = files.filter(f => f.endsWith('.json') && !f.endsWith('.tmp'));
 
       for (const file of jsonFiles) {
-        const filePath = join(STORE_ROOT, file);
+        const filePath = join(this.storeRoot, file);
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const tokens: ShareTokenRecord[] = JSON.parse(content);
@@ -212,11 +218,11 @@ export class FileShareTokenStore implements IShareTokenStore {
 
   async revokeToken(token: string): Promise<boolean> {
     try {
-      const files = await fs.readdir(STORE_ROOT);
+      const files = await fs.readdir(this.storeRoot);
       const jsonFiles = files.filter(f => f.endsWith('.json') && !f.endsWith('.tmp'));
 
       for (const file of jsonFiles) {
-        const filePath = join(STORE_ROOT, file);
+        const filePath = join(this.storeRoot, file);
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const tokens: ShareTokenRecord[] = JSON.parse(content);

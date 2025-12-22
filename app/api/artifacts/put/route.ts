@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { putArtifact } from '../../../../spine/artifacts/ArtifactVault';
 import { ArtifactKind } from '../../../../spine/artifacts/ArtifactTypes';
 
+import type { OmegaMeta } from '../../../../spine/llm/modes/OmegaMeta';
+
 interface PutArtifactRequest {
   kind: ArtifactKind;
   payloads: Record<string, any>;
@@ -19,6 +21,7 @@ interface PutArtifactRequest {
     sessionId?: string;
     isMinor?: boolean;
     notes?: string;
+    omega?: OmegaMeta;
   };
 }
 
@@ -50,6 +53,7 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
 
 
 

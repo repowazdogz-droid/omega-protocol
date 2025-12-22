@@ -72,7 +72,7 @@ export function verifyArtifactBundle(
   const warnings: VerificationWarning[] = [];
 
   // Step 1: Contract version present
-  const contractVersion = payloads.meta?.contractVersion || payloads.contractVersion || CONTRACT_VERSION;
+  const contractVersion = payloads.meta?.contractVersion || payloads.contractVersion;
   if (!contractVersion) {
     errors.push({
       code: 'MISSING_CONTRACT_VERSION',
@@ -179,6 +179,9 @@ export function verifyArtifactBundle(
 
   const rootSha256 = hashManifestRoot(files);
 
+  // Preserve omega from payloads.meta if present
+  const omegaMeta = payloads.meta?.omega;
+
   const manifest: ArtifactManifest = {
     artifactId,
     kind,
@@ -186,7 +189,11 @@ export function verifyArtifactBundle(
     createdAtIso: new Date().toISOString(),
     files,
     rootSha256,
-    redactionsApplied: redactionResult.redactionsApplied
+    redactionsApplied: redactionResult.redactionsApplied,
+    // Add tags if learnerId provided
+    ...(meta?.learnerId ? { tags: [meta.learnerId] } : {}),
+    // Preserve omega if present
+    ...(omegaMeta ? { omega: omegaMeta } : {})
   };
 
   return {

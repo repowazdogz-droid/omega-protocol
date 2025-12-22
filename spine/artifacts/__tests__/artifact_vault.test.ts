@@ -3,9 +3,44 @@
  * Ensures: atomic write path, list bounded, get returns exact manifest + payload.
  */
 
-import { putArtifact, getArtifact, listArtifacts } from '../ArtifactVault';
+import { putArtifact, getArtifact, listArtifacts, setVaultInstance } from '../ArtifactVault';
 import { ArtifactKind } from '../ArtifactTypes';
 import { CONTRACT_VERSION } from '../../contracts/ContractVersion';
+import { beforeEach, afterEach } from 'vitest';
+import { promises as fs } from 'fs';
+import { join } from 'node:path';
+import os from 'os';
+import crypto from 'crypto';
+import { FsArtifactVault } from '../FsArtifactVault';
+
+// Use unique temp directory per test suite to avoid race conditions
+const ROOT = join(os.tmpdir(), `artifactVault-${crypto.randomUUID()}`);
+
+beforeEach(async () => {
+  // Override the singleton vault instance with our isolated one
+  setVaultInstance(new FsArtifactVault(undefined, ROOT));
+  
+  // Ensure vault directory exists before each test (async to match vault implementation)
+  try {
+    await fs.mkdir(join(ROOT, 'XR_BUNDLE'), { recursive: true });
+    await fs.mkdir(join(ROOT, 'SESSION_RECAP'), { recursive: true });
+    await fs.mkdir(join(ROOT, 'KERNEL_RUN'), { recursive: true });
+    await fs.mkdir(join(ROOT, 'ORCHESTRATOR_RUN'), { recursive: true });
+    await fs.mkdir(join(ROOT, 'TEACHER_RECAP'), { recursive: true });
+    await fs.mkdir(join(ROOT, 'CONTACT_INQUIRY'), { recursive: true });
+  } catch {
+    // Ignore if already exists
+  }
+});
+
+afterEach(async () => {
+  // Clean up test artifacts
+  try {
+    await fs.rm(ROOT, { recursive: true, force: true });
+  } catch {
+    // Ignore
+  }
+});
 
 describe('Artifact Vault', () => {
   test('putArtifact creates manifest and stores bundle', async () => {
@@ -99,7 +134,3 @@ describe('Artifact Vault', () => {
     // Note: Filtering by learnerId uses tags, which may not be perfect in dev implementation
   });
 });
-
-
-
-

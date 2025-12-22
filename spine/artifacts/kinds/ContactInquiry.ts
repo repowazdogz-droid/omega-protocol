@@ -164,7 +164,7 @@ export function normalizeContactInquiry(payload: any): NormalizationResult {
   return {
     ok: boundedErrors.length === 0,
     errors: boundedErrors,
-    normalized: boundedErrors.length === 0 ? normalized : undefined
+    normalized: normalized // Always return normalized object, even if there are errors
   };
 }
 

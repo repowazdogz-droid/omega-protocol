@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
-import { evaluateGate } from '../../../../spine/gates/GateEngine';
-import { GateAction, ViewerRole, Surface } from '../../../../spine/gates/GateTypes';
-import { getShareTokenStore } from '../../../../spine/share/ShareTokenStore';
-import { ShareScope } from '../../../../spine/share/ShareTypes';
+import { evaluateGate } from 'spine/gates/GateEngine';
+import { GateAction, ViewerRole, Surface } from 'spine/gates/GateTypes';
+import { getShareTokenStore } from 'spine/share/ShareTokenStore';
+import { ShareScope } from 'spine/share/ShareTypes';
 
 interface PairingRequest {
   mode?: 'demo' | 'solo' | 'presence';

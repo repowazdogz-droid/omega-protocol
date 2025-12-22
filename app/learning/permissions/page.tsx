@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { SPACING, TEXT_SIZES } from '../../ui/uiTokens';
-import UiCard from '../../ui/UiCard';
+import { UiCard } from '@/app/ui';
 import ConsentCard from './components/ConsentCard';
 import ShareLinkCard from './components/ShareLinkCard';
 import PermissionRequestCard from './components/PermissionRequestCard';

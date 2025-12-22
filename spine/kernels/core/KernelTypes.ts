@@ -9,6 +9,8 @@
  * - Claim → ClaimContract (add contractVersion, claimId, align evidence structure)
  */
 
+import type { OmegaMeta } from "../../llm/modes/OmegaMeta";
+
 /**
  * KernelInput: Input to kernel decision logic.
  * Domain-agnostic signal values.
@@ -28,6 +30,14 @@ export interface KernelInput {
     timeToContact?: string;
     [key: string]: string | undefined;
   };
+  /** Optional: Learning session ID if attached */
+  sessionId?: string;
+  /** Optional: Learner ID if persisted */
+  learnerId?: string;
+  /** Optional: Adapter ID for tracking */
+  adapterId?: string;
+  /** Optional: Policy pack ID */
+  policyPackId?: string;
 }
 
 /**
@@ -39,7 +49,7 @@ export interface KernelDecision {
   /** Decision outcome (domain-specific enum) */
   outcome: string;
   /** Confidence level */
-  confidence: "Low" | "Medium" | "High";
+  confidence: "Low" | "Medium" | "High" | "Unknown";
   /** Rationale (human-readable) */
   rationale: string;
   /** Assumptions made */
@@ -63,7 +73,7 @@ export interface Claim {
   /** Evidence for claim */
   evidence: string[];
   /** Confidence in claim */
-  confidence: "Low" | "Medium" | "High";
+  confidence: "Low" | "Medium" | "High" | "Unknown";
 }
 
 /**
@@ -106,6 +116,8 @@ export interface DecisionTrace {
   claims: Claim[];
   /** Version */
   version: string;
+  /** Optional: Summary of trace */
+  summary?: string;
 }
 
 /**
@@ -118,6 +130,8 @@ export interface KernelResult {
   trace: DecisionTrace;
   /** Timestamp */
   timestamp: string;
+  /** Optional: Omega mode metadata */
+  omega?: OmegaMeta;
 }
 
 /**
@@ -138,7 +152,8 @@ export enum TraceNodeType {
 export enum ConfidenceLevel {
   Low = "Low",
   Medium = "Medium",
-  High = "High"
+  High = "High",
+  Unknown = "Unknown"
 }
 
 /**

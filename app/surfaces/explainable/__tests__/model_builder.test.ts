@@ -4,9 +4,9 @@
  */
 
 import { buildFromKernelRun, buildFromOrchestratorRun } from '../ExplainableModelBuilder';
-import { KernelRunRecord } from '../../../../../spine/kernels/surfaces/learning/KernelSurfaceTypes';
-import { OrchestratorRun } from '../../../../../spine/orchestrator/OrchestratorTypes';
-import { CONTRACT_VERSION } from '../../../../../spine/contracts/ContractVersion';
+import { KernelRunRecord } from '@spine/kernels/surfaces/learning/KernelSurfaceTypes';
+import { OrchestratorRun } from '@spine/orchestrator/OrchestratorTypes';
+import { CONTRACT_VERSION } from '@spine/contracts/ContractVersion';
 
 describe('Explainable Model Builder', () => {
   function createTestKernelRun(): KernelRunRecord {

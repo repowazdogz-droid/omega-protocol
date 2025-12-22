@@ -5,12 +5,19 @@
 
 import { FileShareTokenStore } from '../ShareTokenStore';
 import { ShareScope, MAX_TOKENS_PER_LEARNER, TOKEN_LENGTH } from '../ShareTypes';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const makeTmpDir = () => mkdtempSync(join(tmpdir(), 'omega-share-'));
 
 describe('Share Token Store', () => {
   let store: FileShareTokenStore;
+  let tmpDir: string;
 
   beforeEach(() => {
-    store = new FileShareTokenStore();
+    tmpDir = makeTmpDir();
+    store = new FileShareTokenStore(tmpDir);
   });
 
   test('creates token with correct format', async () => {

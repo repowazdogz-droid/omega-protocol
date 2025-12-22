@@ -14,8 +14,23 @@ import { join } from 'path';
 
 /**
  * Golden suite file path (JSON companion file for runtime updates).
+ * Can be overridden for testing.
  */
-const GOLDEN_SUITE_JSON_PATH = join(process.cwd(), 'spine', 'regression', 'golden', 'GOLDEN_SUITE.json');
+let GOLDEN_SUITE_JSON_PATH = join(process.cwd(), 'spine', 'regression', 'golden', 'GOLDEN_SUITE.json');
+
+/**
+ * Sets the golden suite file path (for testing).
+ */
+export function setGoldenSuitePath(path: string): void {
+  GOLDEN_SUITE_JSON_PATH = path;
+}
+
+/**
+ * Gets the current golden suite file path.
+ */
+export function getGoldenSuitePath(): string {
+  return GOLDEN_SUITE_JSON_PATH;
+}
 
 /**
  * Reads golden suite from JSON file (if exists) or falls back to TS constant.
@@ -59,7 +74,7 @@ export async function writeGoldenSuite(cases: GoldenCase[]): Promise<void> {
 
   // Write to JSON file
   const content = JSON.stringify({ cases: boundedCases }, null, 2);
-  await writeFile(GOLDEN_SUITE_JSON_PATH, content, 'utf-8');
+  await writeFile(getGoldenSuitePath(), content, 'utf-8');
 }
 
 /**

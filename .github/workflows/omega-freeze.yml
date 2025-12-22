@@ -1,0 +1,57 @@
+name: Omega Freeze Line Guardrails
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  omega-freeze:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for diff
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install tsx (TypeScript runner)
+        run: npm install --save-dev tsx
+
+      - name: Detect Omega frozen-core changes
+        id: omega
+        run: |
+          OUT=$(npm run -s omega:freeze:changed)
+          echo "$OUT"
+          if echo "$OUT" | grep -q "OMEGA_FROZEN_CHANGED=1"; then
+            echo "changed=1" >> $GITHUB_OUTPUT
+          else
+            echo "changed=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Omega guardrails (only if frozen core changed)
+        if: steps.omega.outputs.changed == '1'
+        run: npm run test:omega:ci
+        env:
+          LLM_BACKEND: openai
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Omega invariants (always run)
+        run: npm run test -- spine/llm/modes/__tests__/omega_invariants.test.ts
+
+
+
+
+
+
+

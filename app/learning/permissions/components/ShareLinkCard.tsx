@@ -9,7 +9,7 @@
 
 import React, { useState } from 'react';
 import { SPACING, TEXT_SIZES } from '../../../ui/uiTokens';
-import UiCard from '../../../ui/UiCard';
+import { UiCard } from '@/app/ui';
 
 const spacing = SPACING.standard;
 const textSizes = TEXT_SIZES.standard;

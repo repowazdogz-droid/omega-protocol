@@ -9,6 +9,7 @@ import RecapEmptyState from '../components/RecapEmptyState';
 import NextStepsCard from '../components/NextStepsCard';
 import IntegrityPanel from './IntegrityPanel';
 import CaptureAsGoldenButton from '../../../surfaces/explainable/components/CaptureAsGoldenButton';
+import { hashString } from '../../../../spine/learning/platform/session/hash';
 
 interface SessionLog {
   sessionId: string;
@@ -44,6 +45,7 @@ interface BundleMeta {
   version: string;
   modeUsed: string;
   reduceMotion: boolean;
+  learnerIdHash?: string;
 }
 
 export default function RecapPage() {
@@ -99,7 +101,13 @@ export default function RecapPage() {
           const data = await response.json();
           const payloads = data.payloads;
           
-          setMeta(payloads.meta);
+          // Ensure meta has learnerIdHash
+          const metaWithHash = payloads.meta ? {
+            ...payloads.meta,
+            learnerIdHash: payloads.meta.learnerIdHash || (payloads.meta.sessionId ? hashString(payloads.meta.sessionId.split('_')[1] || payloads.meta.sessionId) : '')
+          } : null;
+          
+          setMeta(metaWithHash);
           setSessionLog(payloads.sessionlog);
           setBoardState(payloads.learningBoard);
           setThoughtObjects(payloads.thoughtObjects || []);
@@ -111,7 +119,13 @@ export default function RecapPage() {
           }
 
           const data = await response.json();
-          setMeta(data.meta);
+          // Ensure meta has learnerIdHash
+          const metaWithHash = data.meta ? {
+            ...data.meta,
+            learnerIdHash: data.meta.learnerIdHash || (data.meta.sessionId ? hashString(data.meta.sessionId.split('_')[1] || data.meta.sessionId) : '')
+          } : null;
+          
+          setMeta(metaWithHash);
           setSessionLog(data.sessionLog);
           setBoardState(data.boardState);
           setThoughtObjects(data.thoughtObjects || []);

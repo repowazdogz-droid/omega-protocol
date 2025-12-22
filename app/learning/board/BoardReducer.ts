@@ -162,9 +162,15 @@ export function markUncertainty(
 ): LearningBoard {
   const objects = board.objects.map(obj => {
     if (obj.id === objectId) {
+      function coerceConfidence(x: unknown): "low" | "medium" | "high" | "unknown" {
+        return (x === "low" || x === "medium" || x === "high" || x === "unknown")
+          ? x
+          : "unknown";
+      }
+      const confidenceValue = obj.type === 'Uncertainty' ? 'unknown' : 'low';
       return {
         ...obj,
-        confidence: obj.type === 'Uncertainty' ? 'unknown' : 'low' as const
+        confidence: coerceConfidence(confidenceValue)
       }
     }
     return obj

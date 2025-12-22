@@ -11,11 +11,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { SPACING, TEXT_SIZES } from '../ui/uiTokens';
-import UiCard from '../ui/UiCard';
+import { UiCard } from '@/app/ui';
 import ExplainablePanel from '../surfaces/explainable/ExplainablePanel';
-import { KernelRunContract } from '../../../spine/contracts/KernelContracts';
-import { KernelRunRecord } from '../../../spine/kernels/surfaces/learning/KernelSurfaceTypes';
+import { KernelRunContract } from 'spine/contracts/KernelContracts';
+import { KernelRunRecord } from 'spine/kernels/surfaces/learning/KernelSurfaceTypes';
 import { draftSpec } from './copilotClient';
+import type { OmegaMode } from '@/spine/llm/modes/OmegaModes';
+import { OmegaModeSelect } from '@/app/components/omega/OmegaModeSelect';
+import { OmegaMetaBadge } from '@/app/components/omega/OmegaMetaBadge';
+import type { OmegaMeta } from '@/spine/llm/modes/OmegaMeta';
 
 const spacing = SPACING.standard;
 const textSizes = TEXT_SIZES.standard;
@@ -51,6 +55,8 @@ export default function KernelStudioPage() {
   const [draftSpecJson, setDraftSpecJson] = useState<string>('');
   const [draftValidation, setDraftValidation] = useState<any>(null);
   const [copilotError, setCopilotError] = useState<string | null>(null);
+  const [omegaMode, setOmegaMode] = useState<OmegaMode | "">("");
+  const [draftOmegaMeta, setDraftOmegaMeta] = useState<OmegaMeta | undefined>(undefined);
 
   // Helper: Pretty JSON formatter
   const prettyJson = (obj: any): string => {
@@ -60,6 +66,18 @@ export default function KernelStudioPage() {
       return '';
     }
   };
+
+  // Load omegaMode from localStorage on mount
+  useEffect(() => {
+    const saved = window.localStorage.getItem("omegaMode");
+    if (saved) setOmegaMode(saved as OmegaMode | "");
+  }, []);
+
+  // Persist omegaMode to localStorage
+  useEffect(() => {
+    if (omegaMode) window.localStorage.setItem("omegaMode", omegaMode);
+    else window.localStorage.removeItem("omegaMode");
+  }, [omegaMode]);
 
   // Initialize copilot status
   useEffect(() => {
@@ -104,7 +122,7 @@ export default function KernelStudioPage() {
     setDraftValidation(null);
 
     try {
-      const result = await draftSpec(textToSend);
+      const result = await draftSpec(textToSend, omegaMode || undefined);
 
       if (!result.ok) {
         if (result.error === 'LLM_DISABLED') {
@@ -121,6 +139,7 @@ export default function KernelStudioPage() {
         setDraftSpecObj(result.specDraft);
         setDraftSpecJson(prettyJson(result.specDraft));
         setDraftValidation(result.validation || null);
+        setDraftOmegaMeta(result.omegaMeta);
         setCopilotStatus('ready');
         if (truncated) {
           setCopilotError('Input text was truncated to 20,000 characters');
@@ -128,6 +147,7 @@ export default function KernelStudioPage() {
       } else {
         setCopilotStatus('error');
         setCopilotError('No spec draft returned');
+        setDraftOmegaMeta(undefined);
       }
     } catch (err: any) {
       setCopilotStatus('error');
@@ -474,6 +494,10 @@ export default function KernelStudioPage() {
           )}
         </div>
 
+        <div style={{ marginBottom: spacing.sm }}>
+          <OmegaModeSelect value={omegaMode} onChange={setOmegaMode} label="Omega mode (copilot)" />
+        </div>
+
         <div style={{ display: 'flex', gap: spacing.sm, alignItems: 'center', marginBottom: spacing.sm }}>
           <button
             onClick={handleDraftSpec}
@@ -568,22 +592,25 @@ export default function KernelStudioPage() {
 
         {/* Load Draft Button */}
         {draftSpecJson && (
-          <button
-            onClick={handleLoadDraft}
-            disabled={loading}
-            style={{
-              marginTop: spacing.sm,
-              padding: spacing.sm,
-              fontSize: textSizes.body,
-              backgroundColor: loading ? '#ccc' : '#4caf50',
-              color: 'white',
-              border: 'none',
-              borderRadius: 4,
-              cursor: loading ? 'not-allowed' : 'pointer'
-            }}
-          >
-            Load draft into editor
-          </button>
+          <div>
+            <button
+              onClick={handleLoadDraft}
+              disabled={loading}
+              style={{
+                marginTop: spacing.sm,
+                padding: spacing.sm,
+                fontSize: textSizes.body,
+                backgroundColor: loading ? '#ccc' : '#4caf50',
+                color: 'white',
+                border: 'none',
+                borderRadius: 4,
+                cursor: loading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Load draft into editor
+            </button>
+            <OmegaMetaBadge omega={draftOmegaMeta} />
+          </div>
         )}
       </UiCard>
 

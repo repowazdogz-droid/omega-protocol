@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Omega Spatial Gallery</title>
+  <style>
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0e0e11; color:#eaeaf0; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 48px 20px; }
+    h1 { margin:0 0 10px; font-size: 28px; letter-spacing: 0.2px; }
+    .sub { opacity: 0.8; margin: 0 0 24px; line-height: 1.4; }
+    .contract { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.10); border-radius: 14px;
+      padding: 14px 14px; margin: 18px 0 28px; }
+    .contract b { font-weight: 650; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+    a.card { text-decoration:none; color: inherit; display:block; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.10); border-radius: 16px; padding: 14px 14px; }
+    a.card:hover { border-color: rgba(255,255,255,0.22); }
+    .tag { display:inline-block; font-size: 12px; opacity:0.75; margin-bottom: 8px; }
+    .title { font-size: 16px; font-weight: 650; margin: 0 0 6px; }
+    .desc { margin:0; opacity:0.80; line-height: 1.35; font-size: 13px; }
+    .note { margin-top: 22px; opacity: 0.65; font-size: 12px; line-height: 1.4; }
+    code { background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Omega Spatial Gallery</h1>
+    <p class="sub">Static, inspectable spatial templates for reasoning. No simulation. No autonomy. No recommendations.</p>
+
+    <div class="contract">
+      <b>Trust contract:</b> Human-led · Non-autonomous · Visual reasoning only · Uncertainty is shown, not hidden · If it feels like a simulator or decision engine, it has failed.
+    </div>
+
+    <div class="grid">
+      <a class="card" href="../spatial-demo/index.html">
+        <div class="tag">V1</div>
+        <div class="title">Trust Surface (Robot Workspace)</div>
+        <p class="desc">Layers + inspection in a calm static scene. Proves the interaction contract.</p>
+      </a>
+
+      <a class="card" href="../templates-foundation/templates/T2_causal_map/web/index.html">
+        <div class="tag">T2</div>
+        <div class="title">Causal Map</div>
+        <p class="desc">Influence links + disallowed links + uncertainty halos. No forecasting.</p>
+      </a>
+
+      <a class="card" href="../templates-foundation/templates/T3_assumption_surface/web/index.html">
+        <div class="tag">T3</div>
+        <div class="title">Assumption Surface</div>
+        <p class="desc">Assumptions, conflicts, unsupported regions. Finds why teams disagree.</p>
+      </a>
+
+      <a class="card" href="../templates-foundation/templates/T4_tradeoff_atlas/web/index.html">
+        <div class="tag">T4</div>
+        <div class="title">Tradeoff Atlas</div>
+        <p class="desc">Objectives + constraints + feasible region + tradeoff front. No "best choice".</p>
+      </a>
+
+      <a class="card" href="../templates-foundation/templates/T5_assurance_ladder/web/index.html">
+        <div class="tag">T5</div>
+        <div class="title">Assurance Ladder</div>
+        <p class="desc">Inputs → authority → outcomes, constrained by overrides. Not procedures, not certification.</p>
+      </a>
+    </div>
+
+    <p class="note">
+      Tip: If links don't open due to browser file restrictions, run a local server from the repo root:
+      <br/><code>python3 -m http.server 8000</code> then open <code>http://localhost:8000/gallery/</code>
+    </p>
+  </div>
+</body>
+</html>
+
+
+
+
+

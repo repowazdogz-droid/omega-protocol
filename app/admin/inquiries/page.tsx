@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Container } from '../../(site)/components/Container';
 import { Section } from '../../(site)/components/Section';
 import { Card } from '../../(site)/components/Card';
+import { OmegaMetaBadge } from '../../components/omega/OmegaMetaBadge';
+import type { OmegaMeta } from '@/spine/llm/modes/OmegaMeta';
 
 interface InquiryManifest {
   artifactId: string;
@@ -13,6 +15,10 @@ interface InquiryManifest {
   files: Array<{ name: string; sha256: string; bytes: number }>;
   rootSha256: string;
   redactionsApplied: string[];
+  omega?: OmegaMeta;
+  meta?: {
+    omega?: OmegaMeta;
+  };
 }
 
 interface InquiryPayload {
@@ -169,6 +175,7 @@ export default function AdminInquiriesPage() {
                             {inquiry.org}
                           </div>
                         )}
+                        <OmegaMetaBadge omega={manifest.omega ?? manifest.meta?.omega} />
                         {inquiry?.domainTags && inquiry.domainTags.length > 0 && (
                           <div style={{ marginTop: '4px' }}>
                             {inquiry.domainTags.map((tag, i) => (

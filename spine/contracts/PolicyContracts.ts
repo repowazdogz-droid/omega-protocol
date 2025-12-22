@@ -9,6 +9,7 @@
 
 import { CONTRACT_VERSION } from './ContractVersion';
 import { KernelInputContract } from './KernelContracts';
+import type { ClaimContract } from './ClaimContracts';
 
 /**
  * PolicyContextContract: Context for policy evaluation.

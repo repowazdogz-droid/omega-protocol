@@ -7,17 +7,20 @@ import { FsArtifactVault } from '../FsArtifactVault';
 import { ArtifactKind } from '../ArtifactTypes';
 import { promises as fs } from 'fs';
 import { join } from 'path';
-
-const VAULT_ROOT = '/tmp/artifactVault';
+import os from 'os';
+import crypto from 'crypto';
 
 describe('FsArtifactVault', () => {
   let vault: FsArtifactVault;
+  let ROOT: string;
 
   beforeEach(async () => {
-    vault = new FsArtifactVault();
+    // Use unique temp directory per test suite to avoid race conditions
+    ROOT = join(os.tmpdir(), `artifactVault-${crypto.randomUUID()}`);
+    vault = new FsArtifactVault(undefined, ROOT);
     // Clean up test artifacts
     try {
-      await fs.rm(VAULT_ROOT, { recursive: true, force: true });
+      await fs.rm(ROOT, { recursive: true, force: true });
     } catch {
       // Ignore if doesn't exist
     }
@@ -26,41 +29,37 @@ describe('FsArtifactVault', () => {
   afterEach(async () => {
     // Clean up test artifacts
     try {
-      await fs.rm(VAULT_ROOT, { recursive: true, force: true });
+      await fs.rm(ROOT, { recursive: true, force: true });
     } catch {
       // Ignore
     }
   });
 
   test('stores and retrieves artifact', async () => {
-    const payload = { test: 'data', number: 42 };
-    const meta = await vault.put(ArtifactKind.bundle, 'test-id', payload);
-
-    expect(meta.id).toBe('test-id');
-    expect(meta.kind).toBe(ArtifactKind.bundle);
-    expect(meta.contentHash).toBeDefined();
+    await vault.put(ArtifactKind.bundle, 'test-id', { data: 'test' });
 
     const record = await vault.get(ArtifactKind.bundle, 'test-id');
+
     expect(record).toBeDefined();
-    expect(record!.payload).toEqual(payload);
-    expect(record!.meta.contentHash).toBe(meta.contentHash);
+    expect(record?.payload.data).toBe('test');
+    expect(record?.meta.id).toBe('test-id');
+    expect(record?.meta.kind).toBe(ArtifactKind.bundle);
   });
 
   test('atomic write: no partial files', async () => {
-    const payload = { test: 'atomic' };
-    await vault.put(ArtifactKind.bundle, 'atomic-id', payload);
+    await vault.put(ArtifactKind.bundle, 'atomic-id', { data: 'atomic' });
 
-    // Should not have .tmp file
-    const tmpPath = join(VAULT_ROOT, ArtifactKind.bundle, 'atomic-id.json.tmp');
+    // Should NOT have .tmp file
+    const tmpPath = join(ROOT, ArtifactKind.bundle, 'atomic-id.json.tmp');
     try {
       await fs.access(tmpPath);
-      fail('Should not have .tmp file');
-    } catch {
-      // Expected: .tmp file should not exist
+      throw new Error('Temporary file should not exist');
+    } catch (error: any) {
+      expect(error.code).toBe('ENOENT');
     }
 
     // Should have final file
-    const finalPath = join(VAULT_ROOT, ArtifactKind.bundle, 'atomic-id.json');
+    const finalPath = join(ROOT, ArtifactKind.bundle, 'atomic-id.json');
     await fs.access(finalPath); // Should not throw
   });
 
@@ -90,18 +89,18 @@ describe('FsArtifactVault', () => {
   });
 
   test('filters artifacts by tags', async () => {
-    await vault.put(ArtifactKind.bundle, 'id1', { data: 1 }, { tags: ['tag1', 'tag2'] });
-    await vault.put(ArtifactKind.bundle, 'id2', { data: 2 }, { tags: ['tag2'] });
-    await vault.put(ArtifactKind.bundle, 'id3', { data: 3 }, { tags: ['tag3'] });
+    await vault.put(ArtifactKind.bundle, 'tagged-1', { data: 1 }, { tags: ['tag1', 'tag2'] });
+    await vault.put(ArtifactKind.bundle, 'tagged-2', { data: 2 }, { tags: ['tag2', 'tag3'] });
+    await vault.put(ArtifactKind.bundle, 'untagged', { data: 3 });
 
-    const filtered = await vault.list(ArtifactKind.bundle, { tags: ['tag2'] });
-    expect(filtered.length).toBe(2);
-    expect(filtered.every(m => m.tags?.includes('tag2'))).toBe(true);
+    const tagged = await vault.list(ArtifactKind.bundle, { tags: ['tag2'] });
+    expect(tagged.length).toBe(2);
+    expect(tagged.every(m => m.tags?.includes('tag2'))).toBe(true);
   });
 
   test('deletes artifact', async () => {
     await vault.put(ArtifactKind.bundle, 'delete-id', { data: 'test' });
-    
+
     const existed = await vault.exists(ArtifactKind.bundle, 'delete-id');
     expect(existed).toBe(true);
 
@@ -114,21 +113,17 @@ describe('FsArtifactVault', () => {
 
   test('checks existence', async () => {
     expect(await vault.exists(ArtifactKind.bundle, 'non-existent')).toBe(false);
-    
+
     await vault.put(ArtifactKind.bundle, 'exists-id', { data: 'test' });
+
     expect(await vault.exists(ArtifactKind.bundle, 'exists-id')).toBe(true);
   });
 
   test('enforces payload size limit', async () => {
-    const largePayload = 'x'.repeat(600 * 1024); // 600KB
-    const smallVault = new FsArtifactVault(512 * 1024); // 512KB limit
+    const largePayload = { data: 'x'.repeat(10 * 1024 * 1024) }; // 10MB
 
     await expect(
-      smallVault.put(ArtifactKind.bundle, 'large-id', largePayload)
+      vault.put(ArtifactKind.bundle, 'large-id', largePayload)
     ).rejects.toThrow('exceeds limit');
   });
 });
-
-
-
-

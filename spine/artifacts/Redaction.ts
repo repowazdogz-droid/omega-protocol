@@ -256,6 +256,11 @@ export function applyRedactions(
         );
       }
       break;
+
+    case ArtifactKind.LLM_RUN:
+    case ArtifactKind.OMEGA_COMPARE:
+      // LLM runs: no redaction needed (already bounded, no PII)
+      break;
   }
 
   // Bound redactions list

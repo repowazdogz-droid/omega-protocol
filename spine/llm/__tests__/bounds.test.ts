@@ -15,7 +15,7 @@ describe('boundString', () => {
     const long = 'a'.repeat(100);
     const result = boundString(long, 50);
     expect(result.length).toBe(50);
-    expect(result).toEndWith('...');
+    expect(result.endsWith('...')).toBe(true);
   });
 
   it('should handle empty string', () => {
@@ -39,7 +39,7 @@ describe('boundStringArray', () => {
     const arr = ['short', 'a'.repeat(200), 'another'];
     const result = boundStringArray(arr, 10, 50);
     expect(result[1].length).toBe(50);
-    expect(result[1]).toEndWith('...');
+    expect(result[1].endsWith('...')).toBe(true);
   });
 
   it('should filter out non-strings', () => {
@@ -75,8 +75,14 @@ describe('safeJsonParse', () => {
   it('should remove boilerplate text', () => {
     const text = 'I can\'t access the repo. Here is the JSON: {"key": "value"}';
     const result = safeJsonParse(text);
-    // Should still parse the JSON part
+    // Should still parse the JSON part (boilerplate removed, JSON remains)
     expect(result.ok).toBe(true);
+    expect(result.data).toEqual({ key: 'value' });
+    // The boilerplate was removed before parsing, so the parsed data should be clean
+    // Check that the original text contained boilerplate (before removal)
+    expect(text.toLowerCase()).toMatch(/\b(i can'?t|i cannot)\b/);
+    // But the parsed result should be clean JSON
+    expect(JSON.stringify(result.data)).toBe('{"key":"value"}');
   });
 
   it('should handle non-string input', () => {

@@ -141,10 +141,23 @@ export const PROHIBITED_METRICS = [
 
 /**
  * Checks if a string contains any prohibited metrics.
+ * Uses word boundary matching to avoid false positives (e.g., "critique" matching "iq").
  */
 export function containsProhibitedMetrics(text: string): boolean {
   const lower = text.toLowerCase();
-  return PROHIBITED_METRICS.some(metric => lower.includes(metric));
+  return PROHIBITED_METRICS.some(metric => {
+    const metricLower = metric.toLowerCase();
+    // Use word boundary regex to match whole words/phrases only
+    // For multi-word phrases, match as phrase; for single words, use word boundaries
+    if (metricLower.includes(' ')) {
+      // Multi-word phrase: match as phrase
+      return lower.includes(metricLower);
+    } else {
+      // Single word: use word boundary regex to avoid substring matches
+      const regex = new RegExp(`\\b${metricLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      return regex.test(lower);
+    }
+  });
 }
 
 

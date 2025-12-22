@@ -8,6 +8,7 @@
  */
 
 import { CONTRACT_VERSION } from './ContractVersion';
+import type { ClaimContract } from './ClaimContracts';
 
 /**
  * KernelInputContract: Input to kernel decision logic.

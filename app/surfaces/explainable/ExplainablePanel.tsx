@@ -8,8 +8,8 @@
  */
 
 import React from 'react';
-import { KernelRunRecord } from '../../../../spine/kernels/surfaces/learning/KernelSurfaceTypes';
-import { OrchestratorRun } from '../../../../spine/orchestrator/OrchestratorTypes';
+import { KernelRunRecord } from '@spine/kernels/surfaces/learning/KernelSurfaceTypes';
+import { OrchestratorRun } from '@spine/orchestrator/OrchestratorTypes';
 import { ExplainableModelOptions } from './ExplainableTypes';
 import { buildFromKernelRun, buildFromOrchestratorRun } from './ExplainableModelBuilder';
 import OutcomeCard from './components/OutcomeCard';

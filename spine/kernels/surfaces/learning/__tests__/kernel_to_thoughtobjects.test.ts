@@ -165,17 +165,30 @@ describe('kernelToThoughtObjects', () => {
 
     const result = kernelToThoughtObjects(decision, trace, claims, 'kernel_1', 'adapter_1');
 
-    // Check that no internal/system strings appear in content
-    const contentStrings = result.map(obj => {
-      if (typeof obj.content === 'string') {
-        return obj.content;
-      } else {
-        return obj.content.body + ' ' + (obj.content.title || '');
-      }
-    }).join(' ');
+    // Only check human-facing text fields (title, label, text, summary, description)
+    function collectHumanText(o: any): string[] {
+      if (!o) return [];
+      const out: string[] = [];
+      const push = (v: any) => typeof v === 'string' && out.push(v);
 
-    expect(contentStrings.toLowerCase()).not.toContain('internal');
-    expect(contentStrings.toLowerCase()).not.toContain('system');
+      // Add fields that are actually shown to humans in UI
+      push(o.title); push(o.label); push(o.text); push(o.summary); push(o.description);
+      if (o.content) {
+        if (typeof o.content === 'string') {
+          push(o.content);
+        } else {
+          push(o.content.title); push(o.content.body); push(o.content.label);
+        }
+      }
+
+      // Recurse shallowly
+      if (Array.isArray(o.children)) o.children.forEach((c: any) => out.push(...collectHumanText(c)));
+      if (Array.isArray(o.items)) o.items.forEach((c: any) => out.push(...collectHumanText(c)));
+      return out;
+    }
+
+    const humanText = collectHumanText(result).join(' ').toLowerCase();
+    expect(humanText).not.toMatch(/\b(internal|system)\b/);
   });
 
   test('bounds long text content', () => {

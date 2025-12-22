@@ -5,7 +5,18 @@ import { SPACING, MAX_LINE_WIDTH, TEXT_SIZES, TAP_MIN_PX } from '../learning/ui/
 import UiCard from '../learning/ui/UiCard';
 import { appendThoughtObjectsToBoard } from '../learning/persist/LearningPersist';
 import ExplainablePanel from '../surfaces/explainable/ExplainablePanel';
-import { OrchestratorRun } from '../../../spine/orchestrator/OrchestratorTypes';
+import { OrchestratorRun } from '@spine/orchestrator/OrchestratorTypes';
+
+function toOrchestratorRun(x: any): OrchestratorRun {
+  return {
+    ...x,
+    contractVersion: x.contractVersion ?? "1.0.0",
+    createdAtIso: x.createdAtIso ?? new Date().toISOString(),
+    nodes: x.nodes ?? [],
+    edges: x.edges ?? [],
+    trace: x.trace ?? { nodes: [], claims: [] }
+  } as OrchestratorRun;
+}
 import CaptureAsGoldenButton from '../surfaces/explainable/components/CaptureAsGoldenButton';
 import LLMHelperPanel from '../surfaces/explainable/components/LLMHelperPanel';
 import { buildFromOrchestratorRun } from '../surfaces/explainable/ExplainableModelBuilder';
@@ -175,7 +186,7 @@ export default function OrchestratorPage() {
     if (!result?.thoughtObjects || !learnerId) return;
 
     try {
-      await appendThoughtObjectsToBoard(learnerId, result.thoughtObjects);
+      await appendThoughtObjectsToBoard(result.thoughtObjects, learnerId);
       setBoardSent(true);
     } catch (err: any) {
       setError(err.message || 'Failed to send to board');
@@ -354,7 +365,7 @@ export default function OrchestratorPage() {
             </h2>
             <ExplainablePanel
               mode="orchestrator"
-              run={result.orchestratorRun as OrchestratorRun}
+              run={toOrchestratorRun(result.orchestratorRun)}
               opts={{
                 calmMode: true,
                 audience: 'demo',
@@ -374,7 +385,7 @@ export default function OrchestratorPage() {
 
           {/* LLM Helper Panel */}
           {result.orchestratorRun && (() => {
-            const model = buildFromOrchestratorRun(result.orchestratorRun as OrchestratorRun, {
+            const model = buildFromOrchestratorRun(toOrchestratorRun(result.orchestratorRun), {
               calmMode: true,
               audience: 'demo',
               includeReasoning: true

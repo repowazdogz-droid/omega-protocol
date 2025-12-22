@@ -22,6 +22,8 @@ interface KernelRunResult {
     runId: string;
     kernelId: string;
     adapterId: string;
+    createdAtIso?: string;
+    inputHash?: string;
     decision: {
       outcomeId: string;
       label: string;
@@ -114,6 +116,8 @@ export default function UAVKernelsPage() {
             runId: 'error',
             kernelId: 'uav_safe_landing',
             adapterId: 'uav_safe_landing',
+            createdAtIso: new Date().toISOString(),
+            inputHash: '',
             decision: {
               outcomeId: 'ERROR',
               label: 'Unable to run kernel',
@@ -130,7 +134,20 @@ export default function UAVKernelsPage() {
       }
 
       const data = await response.json();
-      setResult(data);
+      // Ensure run has required fields
+      if (data.run) {
+        const safeRun = {
+          ...data.run,
+          createdAtIso: data.run.createdAtIso ?? new Date().toISOString(),
+          inputHash: data.run.inputHash ?? ""
+        };
+        setResult({
+          ...data,
+          run: safeRun
+        });
+      } else {
+        setResult(data);
+      }
       setSelectedPreset(preset);
       
       // Track artifactId if run was persisted
@@ -139,23 +156,25 @@ export default function UAVKernelsPage() {
       }
     } catch (err: any) {
       // Calm error handling - show result card with error state
-      setResult({
-        ok: false,
-        run: {
-          runId: 'error',
-          kernelId: 'uav_safe_landing',
-          adapterId: 'uav_safe_landing',
-          decision: {
-            outcomeId: 'ERROR',
-            label: 'Unable to run kernel',
-            confidence: 'Unknown',
-            rationale: err.message || 'Failed to run kernel. Please check your connection and try again.'
+        setResult({
+          ok: false,
+          run: {
+            runId: 'error',
+            kernelId: 'uav_safe_landing',
+            adapterId: 'uav_safe_landing',
+            createdAtIso: new Date().toISOString(),
+            inputHash: '',
+            decision: {
+              outcomeId: 'ERROR',
+              label: 'Unable to run kernel',
+              confidence: 'Unknown',
+              rationale: err.message || 'Failed to run kernel. Please check your connection and try again.'
+            },
+            claims: [],
+            trace: []
           },
-          claims: [],
-          trace: []
-        },
-        thoughtObjects: []
-      });
+          thoughtObjects: []
+        });
     } finally {
       setLoading(false);
     }
@@ -388,7 +407,7 @@ export default function UAVKernelsPage() {
             </h2>
             <ExplainablePanel
               mode="kernel"
-              run={result.run}
+              run={result.run as any}
               opts={{
                 calmMode: true,
                 audience: 'demo',
@@ -408,7 +427,11 @@ export default function UAVKernelsPage() {
 
           {/* LLM Helper Panel */}
           {result.run && (() => {
-            const model = buildFromKernelRun(result.run, {
+            const model = buildFromKernelRun({
+              ...result.run,
+              createdAtIso: result.run.createdAtIso ?? new Date().toISOString(),
+              inputHash: result.run.inputHash ?? ""
+            } as any, {
               calmMode: true,
               audience: 'demo',
               includeReasoning: true

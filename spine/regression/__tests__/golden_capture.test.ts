@@ -7,13 +7,33 @@ import { captureArtifactAsGolden } from '../GoldenCapture';
 import { putArtifact } from '../../artifacts/ArtifactVault';
 import { ArtifactKind } from '../../artifacts/ArtifactTypes';
 import { CONTRACT_VERSION } from '../../contracts/ContractVersion';
+import { setGoldenSuitePath } from '../golden/GoldenSuiteWriter';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { beforeEach, beforeAll, vi } from 'vitest';
+
+// Helper to create temp suite path
+function tmpSuitePath(name: string): string {
+  const dir = mkdtempSync(join(tmpdir(), 'golden-capture-'));
+  return join(dir, name);
+}
 
 describe('Golden Capture', () => {
   const testArtifactId = `test_artifact_${Date.now()}`;
+  let testSuitePath: string;
+
+  beforeAll(() => {
+    // Set up temp golden suite file for each test suite
+    const tmpDir = mkdtempSync(join(tmpdir(), 'omega-golden-test-'));
+    testSuitePath = join(tmpDir, 'GOLDEN_SUITE.json');
+    setGoldenSuitePath(testSuitePath);
+  });
 
   beforeEach(async () => {
     // Create a test artifact
     const testArtifact = {
+      meta: { contractVersion: CONTRACT_VERSION },
       run: {
         contractVersion: CONTRACT_VERSION,
         runId: testArtifactId,
@@ -81,6 +101,20 @@ describe('Golden Capture', () => {
   });
 
   test('label bounding enforced', async () => {
+    // Set suite path after resetModules, before importing capture logic
+    // Use isolated suite path for this test to avoid pollution
+    const suitePath = tmpSuitePath('GOLDEN_SUITE.json');
+    
+    // Reset modules to kill cached JSON/module singletons
+    vi.resetModules();
+    
+    // Set path before importing
+    const { setGoldenSuitePath } = await import('../golden/GoldenSuiteWriter');
+    setGoldenSuitePath(suitePath);
+    
+    // Re-import capture function after path is set
+    const { captureArtifactAsGolden } = await import('../GoldenCapture');
+    
     const longLabel = 'A'.repeat(100); // 100 chars, max is 60
 
     const result = await captureArtifactAsGolden({
@@ -98,6 +132,7 @@ describe('Golden Capture', () => {
     // Create another test artifact
     const testArtifactId2 = `test_artifact_2_${Date.now()}`;
     const testArtifact2 = {
+      meta: { contractVersion: CONTRACT_VERSION },
       run: {
         contractVersion: CONTRACT_VERSION,
         runId: testArtifactId2,
@@ -167,7 +202,3 @@ describe('Golden Capture', () => {
     expect(result.warnings[0]).toContain('not found');
   });
 });
-
-
-
-

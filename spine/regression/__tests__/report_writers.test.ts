@@ -65,11 +65,13 @@ describe('Report Writers', () => {
       ]
     };
 
-    const path1 = await writeGoldenJsonReport(result, TEST_OUT_DIR);
+    const fixedTimestamp = '2024-01-01T00:00:00.000Z';
+
+    const path1 = await writeGoldenJsonReport(result, TEST_OUT_DIR, { generatedAtIso: fixedTimestamp });
     const content1 = await readFile(path1, 'utf-8');
 
-    // Write again
-    const path2 = await writeGoldenJsonReport(result, TEST_OUT_DIR);
+    // Write again with same timestamp
+    const path2 = await writeGoldenJsonReport(result, TEST_OUT_DIR, { generatedAtIso: fixedTimestamp });
     const content2 = await readFile(path2, 'utf-8');
 
     expect(content1).toBe(content2);

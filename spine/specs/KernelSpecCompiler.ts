@@ -124,15 +124,12 @@ export function compileKernelSpec(spec: KernelSpec): CompiledKernelFunction {
         const forcedOutcome = spec.outcomes.find(o => o.outcomeId === override.forcedOutcome);
         if (forcedOutcome) {
           return {
-            contractVersion: CONTRACT_VERSION,
             outcome: forcedOutcome.outcomeId,
             confidence: forcedOutcome.confidence,
             rationale: `${override.reason || 'Override applied'}: ${forcedOutcome.rationale}`,
             assumptions: [],
             uncertainties: [],
-            overridesApplied: [override.overrideId],
-            kernelId: spec.kernelId,
-            adapterId: input.adapterId || spec.adapterId
+            overridesApplied: [override.overrideId]
           };
         }
       }
@@ -143,14 +140,11 @@ export function compileKernelSpec(spec: KernelSpec): CompiledKernelFunction {
     if (!matchingOutcome) {
       // No match found - return unknown outcome
       return {
-        contractVersion: CONTRACT_VERSION,
         outcome: 'UNKNOWN',
         confidence: 'Unknown',
         rationale: 'No matching outcome found for given signals',
         assumptions: [],
-        uncertainties: [],
-        kernelId: spec.kernelId,
-        adapterId: input.adapterId || spec.adapterId
+        uncertainties: []
       };
     }
 
@@ -159,28 +153,22 @@ export function compileKernelSpec(spec: KernelSpec): CompiledKernelFunction {
       if (isOutcomeDisallowed(spec.disallows, matchingOutcome.outcomeId, signals)) {
         // Outcome is disallowed - return unknown
         return {
-          contractVersion: CONTRACT_VERSION,
           outcome: 'UNKNOWN',
           confidence: 'Unknown',
           rationale: `Outcome ${matchingOutcome.outcomeId} is disallowed for current conditions`,
           assumptions: [],
-          uncertainties: [],
-          kernelId: spec.kernelId,
-          adapterId: input.adapterId || spec.adapterId
+          uncertainties: []
         };
       }
     }
 
     // Step 4: Return decision
     return {
-      contractVersion: CONTRACT_VERSION,
       outcome: matchingOutcome.outcomeId,
       confidence: matchingOutcome.confidence,
       rationale: matchingOutcome.rationale,
       assumptions: [],
-      uncertainties: [],
-      kernelId: spec.kernelId,
-      adapterId: input.adapterId || spec.adapterId
+      uncertainties: []
     };
   };
 }

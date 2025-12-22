@@ -250,7 +250,7 @@ export function applyObservations(
         reason += `(exposures: ${state.exposures}, signals: ${state.recentSignals.length}).`;
       } else {
         reason += `Exposures: ${previousState.exposures} → ${state.exposures}, `;
-        reason += `signals: ${previousState.signalCount} → ${state.signalCount}. `;
+        reason += `signals: ${previousState.signalCount} → ${state.recentSignals.length}. `;
         reason += `Confidence band remains ${state.confidenceBand}.`;
       }
       

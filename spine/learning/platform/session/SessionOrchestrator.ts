@@ -16,12 +16,13 @@ import {
 import { hashString } from "./hash";
 import {
   createDialogueState,
-  planNextTurn,
-  DialogueState
+  planNextTurn
 } from "../dialogue/TurnPlanner";
+import { DialogueState } from "../dialogue/DialogTypes";
 import {
   generateAssessment
 } from "../assessment/AssessmentGenerator";
+import { AssessmentOutput } from "../assessment/AssessmentTypes";
 import {
   applyObservations,
   SkillGraphUpdateResult

@@ -3,28 +3,28 @@
  * Ensures: deterministic ordering, no duplicates, bounded writes.
  */
 
-import { addGoldenCase, removeGoldenCase, readGoldenSuite, writeGoldenSuite } from '../golden/GoldenSuiteWriter';
+import { addGoldenCase, removeGoldenCase, readGoldenSuite, writeGoldenSuite, setGoldenSuitePath } from '../golden/GoldenSuiteWriter';
 import { GoldenCase } from '../RegressionTypes';
 import { readFile, writeFile, unlink } from 'fs/promises';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'path';
 
-// Mock file path for tests
-const TEST_GOLDEN_SUITE_PATH = join(__dirname, '..', 'golden', 'GOLDEN_SUITE.test.json');
-
 describe('Golden Suite Writer', () => {
+  let tmpDir: string;
+  let testSuitePath: string;
+
   beforeEach(async () => {
-    // Clean up test file before each test
-    try {
-      await unlink(TEST_GOLDEN_SUITE_PATH);
-    } catch {
-      // File doesn't exist, ignore
-    }
+    // Create temp directory for each test
+    tmpDir = mkdtempSync(join(tmpdir(), 'goldens-'));
+    testSuitePath = join(tmpDir, 'GOLDEN_SUITE.json');
+    setGoldenSuitePath(testSuitePath);
   });
 
   afterEach(async () => {
-    // Clean up test file after each test
+    // Clean up temp directory after each test
     try {
-      await unlink(TEST_GOLDEN_SUITE_PATH);
+      await unlink(testSuitePath);
     } catch {
       // Ignore
     }

@@ -77,3 +77,10 @@ export default function ClaimChips({ chips, calmMode = true }: ClaimChipsProps) 
 
 
 
+
+
+
+
+
+
+

@@ -1,15 +1,18 @@
-import React from "react";
-import SiteNav from "./components/SiteNav";
-import SiteFooter from "./components/SiteFooter";
+import type { Metadata } from 'next';
 
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+export const metadata: Metadata = {
+  title: 'OMEGA — Human-led cognitive infrastructure',
+  description: 'Clarity, reasoning, and simplification for complex technical domains — without autonomy, persuasion, or decision substitution.',
+};
+
+export default function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <div className="site-container">
-      <SiteNav />
-      <main className="site-main">
-        <div className="site-content">{children}</div>
-      </main>
-      <SiteFooter />
-    </div>
+    <html lang="en">
+      <body>{children}</body>
+    </html>
   );
 }

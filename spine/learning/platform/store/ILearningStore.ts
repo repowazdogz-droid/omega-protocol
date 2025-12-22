@@ -12,6 +12,7 @@ import {
   StoredSessionRecord
 } from "./StoreTypes";
 import { KernelRunRecord } from "../../../kernels/surfaces/learning/KernelSurfaceTypes";
+import { OrchestratorRunRecord } from "./OrchestratorRunTypes";
 
 /**
  * Learning store interface.

@@ -1,0 +1,7 @@
+module omega-cli
+
+go 1.22
+
+
+
+

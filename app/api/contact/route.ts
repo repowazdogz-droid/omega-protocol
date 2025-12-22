@@ -7,9 +7,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { putArtifact } from '../../../spine/artifacts/ArtifactVault';
-import { ArtifactKind } from '../../../spine/artifacts/ArtifactTypes';
-import { normalizeContactInquiry } from '../../../spine/artifacts/kinds/ContactInquiry';
+import { putArtifact } from '@spine/artifacts/ArtifactVault';
+import { ArtifactKind } from '@spine/artifacts/ArtifactTypes';
+import { normalizeContactInquiry } from '@spine/artifacts/kinds/ContactInquiry';
 
 // In-memory rate limit store (best-effort)
 interface RateLimitEntry {
@@ -113,11 +113,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store as artifact
+    // Store as artifact (ensure contractVersion is in payload.meta)
     const artifactId = `contact_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const result = await putArtifact(
       ArtifactKind.CONTACT_INQUIRY,
-      { inquiry: normalization.normalized },
+      { 
+        meta: { contractVersion: '1.0.0' },
+        inquiry: normalization.normalized 
+      },
       { artifactId }
     );
 

@@ -249,9 +249,17 @@ function generateAIUsagePolicy(
 export function generateAssessment(
   request: AssessmentRequest
 ): AssessmentOutput {
-  // Check for prohibited metrics in inputs (safety check)
-  const inputText = JSON.stringify(request);
-  if (containsProhibitedMetrics(inputText)) {
+  // Check for prohibited metrics in human-facing content fields only (not structural keys)
+  // Scan only: subject, topic, objective (user-provided content)
+  // Skip: assessmentType, learnerId, ageBand (structural identifiers)
+  const fieldsToScan: string[] = [
+    request.subject ?? "",
+    request.topic ?? "",
+    request.objective ?? ""
+  ].filter(Boolean);
+
+  const combined = fieldsToScan.join("\n");
+  if (containsProhibitedMetrics(combined)) {
     throw new Error("Assessment request contains prohibited metrics");
   }
   

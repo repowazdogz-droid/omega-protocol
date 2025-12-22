@@ -76,55 +76,54 @@ export class KernelRunner {
     const context: PolicyContext = {
       signals: input.signals,
       uncertainty: input.uncertainty,
-      overrides: input.overrides,
+      overrides: input.overrides || {},
       metadata: {}
     };
 
-    // Check disallow rules first
-    for (const rule of this.disallowRules) {
-      if (rule.condition(context)) {
-        this.traceBuilder.addPolicy(
-          'Disallow Check',
-          rule.reason,
-          { disallowed: true, reason: rule.reason }
-        );
-
-        const decision: KernelDecision = {
-          outcome: 'DISALLOWED',
-          confidence: 'High',
-          rationale: rule.reason,
-          assumptions: [],
-          uncertainties: Object.keys(input.uncertainty).filter(k => input.uncertainty[k])
-        };
-
-        const trace = this.traceBuilder.build(inputHash);
-        return {
-          decision,
-          trace,
-          timestamp: input.timestamp
-        };
-      }
-    }
-
-    // Apply override rules
+    // Apply override rules first (they take precedence over disallow rules)
+    // Override rules are emergency escape hatches that should win
     let overrideApplied = false;
+    let overrideDecision: KernelDecision | null = null;
     for (const rule of this.overrideRules) {
       if (rule.condition(context)) {
-        const overrideDecision = rule.action(context);
+        const ruleDecision = rule.action(context);
         this.traceBuilder.addOverride(
           `Override: ${rule.type}`,
-          overrideDecision.rationale,
-          { overrideType: rule.type, outcome: overrideDecision.outcome }
+          ruleDecision.rationale,
+          { overrideType: rule.type, outcome: ruleDecision.outcome ?? '' }
         );
 
-        if (overrideDecision.outcome) {
-          const decision: KernelDecision = {
-            outcome: overrideDecision.outcome,
-            confidence: overrideDecision.confidence,
-            rationale: overrideDecision.rationale,
+        if (ruleDecision.outcome) {
+          overrideDecision = {
+            outcome: ruleDecision.outcome,
+            confidence: ruleDecision.confidence,
+            rationale: ruleDecision.rationale,
             assumptions: [],
             uncertainties: Object.keys(input.uncertainty).filter(k => input.uncertainty[k]),
             overridesApplied: [rule.type]
+          };
+          overrideApplied = true;
+          break; // First matching override wins
+        }
+      }
+    }
+
+    // Check disallow rules (only if no override applied)
+    if (!overrideApplied) {
+      for (const rule of this.disallowRules) {
+        if (rule.condition(context)) {
+          this.traceBuilder.addPolicy(
+            'Disallow Check',
+            rule.reason,
+            { disallowed: true, reason: rule.reason }
+          );
+
+          const decision: KernelDecision = {
+            outcome: 'DISALLOWED',
+            confidence: 'High',
+            rationale: rule.reason,
+            assumptions: [],
+            uncertainties: Object.keys(input.uncertainty).filter(k => input.uncertainty[k])
           };
 
           const trace = this.traceBuilder.build(inputHash);
@@ -134,8 +133,17 @@ export class KernelRunner {
             timestamp: input.timestamp
           };
         }
-        overrideApplied = true;
       }
+    }
+
+    // Return override decision if one was applied
+    if (overrideDecision) {
+      const trace = this.traceBuilder.build(inputHash);
+      return {
+        decision: overrideDecision,
+        trace,
+        timestamp: input.timestamp
+      };
     }
 
     // Run policies
@@ -145,7 +153,7 @@ export class KernelRunner {
       this.traceBuilder.addPolicy(
         'Policy Evaluation',
         policyDecision.rationale,
-        { outcome: policyDecision.outcome, disallowed: policyDecision.disallowed }
+        { outcome: policyDecision.outcome ?? '', disallowed: policyDecision.disallowed }
       );
 
       if (policyDecision.disallowed) {

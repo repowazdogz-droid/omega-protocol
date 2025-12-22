@@ -65,8 +65,8 @@ export default function LearningBoardComponent({
   
   return (
     <div style={{
-      marginTop: SPACING.medium,
-      padding: SPACING.medium,
+      marginTop: SPACING.standard.md,
+      padding: SPACING.standard.md,
       background: '#f9f9f9',
       border: '1px solid #e0e0e0',
       borderRadius: '8px'
@@ -76,10 +76,10 @@ export default function LearningBoardComponent({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: SPACING.medium
+        marginBottom: SPACING.standard.md
       }}>
         <div>
-          <h3 style={{ ...TEXT_SIZES.h3, margin: 0, marginBottom: '0.25rem' }}>
+          <h3 style={{ fontSize: TEXT_SIZES.h3, margin: 0, marginBottom: '0.25rem' }}>
             Thinking Board
           </h3>
           {board.pathId && board.currentStepId && (
@@ -116,7 +116,7 @@ export default function LearningBoardComponent({
             <div
               key={obj.id}
               style={{
-                padding: SPACING.medium,
+                padding: SPACING.standard.md,
                 background: isUncertain ? '#fff3cd' : '#fff',
                 border: `2px solid ${isUncertain ? '#ffc107' : '#e0e0e0'}`,
                 borderRadius: '8px',

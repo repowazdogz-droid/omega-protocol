@@ -8,10 +8,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { addGoldenCase } from '../../../../spine/regression/golden/GoldenSuiteWriter';
-import { getArtifact } from '../../../../spine/artifacts/ArtifactVault';
-import { summarizeKernelRun, summarizeOrchestratorRun, summarizeRecap } from '../../../../spine/regression/Summarizers';
-import { ArtifactKind } from '../../../../spine/artifacts/ArtifactTypes';
+import { addGoldenCase } from 'spine/regression/golden/GoldenSuiteWriter';
+import { getArtifact } from 'spine/artifacts/ArtifactVault';
+import { summarizeKernelRun, summarizeOrchestratorRun, summarizeRecap } from 'spine/regression/Summarizers';
+import { ArtifactKind } from 'spine/artifacts/ArtifactTypes';
 
 interface AddGoldenRequest {
   artifactId: string;

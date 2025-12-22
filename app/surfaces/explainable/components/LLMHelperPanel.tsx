@@ -11,7 +11,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { SPACING, TEXT_SIZES } from '../../../ui/uiTokens';
-import UiCard from '../../../ui/UiCard';
+import { UiCard } from '@/app/ui';
+import { OmegaModeSelect } from '@/app/components/omega/OmegaModeSelect';
+import { OmegaMetaBadge } from '@/app/components/omega/OmegaMetaBadge';
+import type { OmegaMode } from '@/spine/llm/modes/OmegaModes';
+import type { OmegaMeta } from '@/spine/llm/modes/OmegaMeta';
 
 const spacing = SPACING.standard;
 const textSizes = TEXT_SIZES.standard;
@@ -39,6 +43,20 @@ export default function LLMHelperPanel({
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [geminiEnabled, setGeminiEnabled] = useState<boolean | null>(null);
+  const [omegaMode, setOmegaMode] = useState<OmegaMode | "">("");
+  const [omegaMeta, setOmegaMeta] = useState<OmegaMeta | undefined>(undefined);
+
+  // Load omegaMode from localStorage on mount
+  useEffect(() => {
+    const saved = window.localStorage.getItem("omegaMode");
+    if (saved) setOmegaMode(saved as OmegaMode | "");
+  }, []);
+
+  // Persist omegaMode to localStorage
+  useEffect(() => {
+    if (omegaMode) window.localStorage.setItem("omegaMode", omegaMode);
+    else window.localStorage.removeItem("omegaMode");
+  }, [omegaMode]);
 
   // Check Gemini status on mount
   useEffect(() => {
@@ -78,17 +96,17 @@ export default function LLMHelperPanel({
     setStatus('running');
     setError(null);
     setOutput([]);
+    setOmegaMeta(undefined);
     setIsExpanded(true);
 
     try {
+      const body: any = { kind, payload, mode };
+      if (omegaMode) body.omegaMode = omegaMode;
+
       const response = await fetch('/api/llm/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kind,
-          payload,
-          mode
-        })
+        body: JSON.stringify(body)
       });
 
       const data = await response.json();
@@ -101,8 +119,12 @@ export default function LLMHelperPanel({
           setStatus('error');
           setError(data.error || 'Failed to generate explanation');
         }
+        setOmegaMeta(undefined);
         return;
       }
+
+      // Capture omegaMeta if present
+      setOmegaMeta(data.omegaMeta);
 
       // Bound output
       if (mode === 'questions') {
@@ -131,7 +153,7 @@ export default function LLMHelperPanel({
     }
   };
 
-  const isDisabled = status === 'disabled' || !geminiEnabled || disabledReason;
+  const isDisabled: boolean = status === 'disabled' || !geminiEnabled || !!disabledReason;
 
   return (
     <UiCard style={{ marginTop: spacing.md }}>
@@ -166,20 +188,24 @@ export default function LLMHelperPanel({
           )}
 
           {!disabledReason && (
-            <div style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap', marginBottom: spacing.sm }}>
-              {kind !== 'questions' && (
+            <div>
+              <div style={{ marginBottom: spacing.sm }}>
+                <OmegaModeSelect value={omegaMode} onChange={setOmegaMode} />
+              </div>
+              <div style={{ display: 'flex', gap: spacing.sm, flexWrap: 'wrap', marginBottom: spacing.sm }}>
+                {kind !== 'questions' && (
                 <>
                   <button
                     onClick={() => handleExplain('bullets')}
-                    disabled={isDisabled || status === 'running'}
+                    disabled={!!isDisabled || status === 'running'}
                     style={{
                       padding: spacing.xs,
                       fontSize: textSizes.small,
-                      backgroundColor: (isDisabled || status === 'running') ? '#ccc' : '#1976d2',
+                      backgroundColor: (!!isDisabled || status === 'running') ? '#ccc' : '#1976d2',
                       color: 'white',
                       border: 'none',
                       borderRadius: 4,
-                      cursor: (isDisabled || status === 'running') ? 'not-allowed' : 'pointer',
+                      cursor: (!!isDisabled || status === 'running') ? 'not-allowed' : 'pointer',
                       whiteSpace: 'nowrap'
                     }}
                   >
@@ -187,15 +213,15 @@ export default function LLMHelperPanel({
                   </button>
                   <button
                     onClick={() => handleExplain('plain')}
-                    disabled={isDisabled || status === 'running'}
+                    disabled={!!isDisabled || status === 'running'}
                     style={{
                       padding: spacing.xs,
                       fontSize: textSizes.small,
-                      backgroundColor: (isDisabled || status === 'running') ? '#ccc' : '#1976d2',
+                      backgroundColor: (!!isDisabled || status === 'running') ? '#ccc' : '#1976d2',
                       color: 'white',
                       border: 'none',
                       borderRadius: 4,
-                      cursor: (isDisabled || status === 'running') ? 'not-allowed' : 'pointer',
+                      cursor: (!!isDisabled || status === 'running') ? 'not-allowed' : 'pointer',
                       whiteSpace: 'nowrap'
                     }}
                   >
@@ -219,6 +245,7 @@ export default function LLMHelperPanel({
               >
                 Generate 5 smart questions
               </button>
+              </div>
             </div>
           )}
 
@@ -265,6 +292,7 @@ export default function LLMHelperPanel({
                   ))}
                 </ul>
               )}
+              <OmegaMetaBadge omega={omegaMeta} />
             </div>
           )}
         </div>

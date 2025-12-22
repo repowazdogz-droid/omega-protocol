@@ -73,15 +73,23 @@ export class SafeLandingAdapter implements IKernelAdapter {
     allIssues.push(...altitudeResult.issues.map(issue => ({ ...issue, signalKey: 'altitude' })));
 
     // Parse health status enum
-    const healthStatusResult = parseEnum(signals.healthStatus, ['H1', 'H2', 'H3', 'H4', 'NOMINAL', 'DEGRADED', 'CRITICAL', 'FAILED']);
+    const healthStatusResult = parseEnum(signals.healthStatus, ['H1', 'H2', 'H3', 'H4', 'NOMINAL', 'DEGRADED', 'CRITICAL', 'FAILED', 'UNKNOWN']);
     let healthStatus: HealthStatus | undefined;
-    if (healthStatusResult.value !== undefined) {
+    if (healthStatusResult.value !== undefined && healthStatusResult.value !== 'UNKNOWN') {
       healthStatus = this.mapHealthStatus(healthStatusResult.value);
       normalized.healthStatus = healthStatus;
     } else {
-      // Default to H2 if parsing failed
+      // If UNKNOWN or parsing failed, default to H2 but mark as uncertain
       healthStatus = HealthStatus.H2;
       normalized.healthStatus = healthStatus;
+      // Add parse issue for UNKNOWN status
+      if (signals.healthStatus === 'UNKNOWN' || !healthStatusResult.value) {
+        allIssues.push({
+          severity: 'warn',
+          message: `Unknown or missing health status: ${signals.healthStatus || 'undefined'}`,
+          signalKey: 'healthStatus'
+        });
+      }
     }
     allIssues.push(...healthStatusResult.issues.map(issue => ({ ...issue, signalKey: 'healthStatus' })));
 
@@ -133,6 +141,13 @@ export class SafeLandingAdapter implements IKernelAdapter {
     const uncertainty: Record<string, boolean> = {};
     for (const flag of uncertaintyFlags) {
       uncertainty[flag.signalKey] = true;
+      // Also map common signal keys to shorter names for backward compatibility
+      if (flag.signalKey === 'healthStatus') {
+        uncertainty['health'] = true;
+      }
+      if (flag.signalKey === 'altitudeBand' || flag.signalKey === 'altitude') {
+        uncertainty['altitude'] = true;
+      }
     }
 
     // Build KernelInput with deterministic key ordering

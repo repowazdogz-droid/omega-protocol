@@ -7,7 +7,7 @@
  * Version: 0.1
  */
 
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import {
   generateAssessment
 } from "../AssessmentGenerator";
@@ -133,9 +133,8 @@ describe("AssessmentGenerator", () => {
       const request = createTestRequest();
       const output = generateAssessment(request);
       
-      PROHIBITED_METRICS.forEach(metric => {
-        expect(output.prompt.toLowerCase()).not.toContain(metric.toLowerCase());
-      });
+      // Use the same word-boundary-aware checker as the generator
+      expect(containsProhibitedMetrics(output.prompt)).toBe(false);
     });
     
     it("should not contain prohibited metrics in rubric", () => {
@@ -144,9 +143,8 @@ describe("AssessmentGenerator", () => {
       
       const rubricText = JSON.stringify(output.rubric);
       
-      PROHIBITED_METRICS.forEach(metric => {
-        expect(rubricText.toLowerCase()).not.toContain(metric.toLowerCase());
-      });
+      // Use the same word-boundary-aware checker as the generator
+      expect(containsProhibitedMetrics(rubricText)).toBe(false);
     });
     
     it("should not contain prohibited metrics in integrity checks", () => {
@@ -155,9 +153,8 @@ describe("AssessmentGenerator", () => {
       
       const checksText = output.integrityChecks.join(" ");
       
-      PROHIBITED_METRICS.forEach(metric => {
-        expect(checksText.toLowerCase()).not.toContain(metric.toLowerCase());
-      });
+      // Use the same word-boundary-aware checker as the generator
+      expect(containsProhibitedMetrics(checksText)).toBe(false);
     });
     
     it("should not contain prohibited metrics in AI usage policy", () => {

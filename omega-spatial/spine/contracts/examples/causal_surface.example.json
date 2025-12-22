@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0",
+  "surfaceId": "causalroom_demo",
+  "surfaceType": "causal_room",
+  "title": "CausalRoom (demo export)",
+  "description": "Conceptual causal structure. Visual reasoning only.",
+  "trust": {
+    "humanLed": true,
+    "nonAutonomous": true,
+    "visualReasoningOnly": true,
+    "notSimulation": true,
+    "noPrediction": true,
+    "noOptimization": true,
+    "noRecommendations": true,
+    "nothingMovesUnlessCamera": true,
+    "notes": "This export is for inspection and bounded compute consumption only."
+  },
+  "layers": [
+    { "id": "Nodes", "title": "Nodes", "visibleByDefault": true },
+    { "id": "Links", "title": "Links", "visibleByDefault": true },
+    { "id": "DisallowedLinks", "title": "Disallowed Links", "visibleByDefault": true },
+    { "id": "Uncertainty", "title": "Uncertainty", "visibleByDefault": true }
+  ],
+  "elements": [
+    { "id": "N1", "kind": "node", "layerId": "Nodes", "title": "Sensor Quality", "meaning": "Illustrates input signal quality. Not a prescription.", "selectable": true },
+    { "id": "N2", "kind": "node", "layerId": "Nodes", "title": "Estimator Drift", "meaning": "Illustrates drift/uncertainty accumulation. Not a guarantee.", "selectable": true },
+    { "id": "L1", "kind": "link", "layerId": "Links", "title": "N1 → N2", "meaning": "Illustrates influence direction. Not a forecast.", "selectable": true },
+    { "id": "D1", "kind": "disallowed_link", "layerId": "DisallowedLinks", "title": "N1 → N6 (disallowed)", "meaning": "Boundary marker: direct causal claim is not supported.", "selectable": true }
+  ],
+  "bounds": {
+    "scope": "demo_safe",
+    "explicitExclusions": ["simulation", "prediction", "optimization", "recommendations", "control", "procedures", "certification_claims", "autonomy"],
+    "assumptionPolicy": "declare_all",
+    "notes": "Static structure only."
+  },
+  "uncertainty": {
+    "unknowns": ["Exact causal strengths are not represented."],
+    "assumptions": ["Nodes represent conceptual factors, not measured variables."]
+  },
+  "provenance": {
+    "createdAtISO": "2025-12-20T00:00:00Z",
+    "createdBy": "omega-spatial",
+    "source": "demo",
+    "notes": "Example only."
+  }
+}
+
+

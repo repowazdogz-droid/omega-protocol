@@ -6,7 +6,7 @@
  * Version: 0.1
  */
 
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import { applyStyleToTutorTurn } from "../StyleEnforcer";
 import { TutorTurnPlan, ScaffoldStep } from "../../dialogue/DialogTypes";
 import { TutorMode } from "../../dialogue/DialogTypes";

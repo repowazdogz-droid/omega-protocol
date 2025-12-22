@@ -69,3 +69,10 @@ export interface ConsentStateContract {
 
 
 
+
+
+
+
+
+
+

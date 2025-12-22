@@ -59,13 +59,20 @@ export function mapUncertainty(
 
   // Check for critical parse issues
   const criticalIssues = result.issues.filter(i => i.severity === 'critical');
-  for (const issue of criticalIssues.slice(0, 10)) { // Bound to 10
-    uncertaintyFlags.push({
-      signalKey: issue.signalKey,
-      reason: boundString(`Critical parse issue: ${issue.message}`, 120),
-      level: 'high'
-    });
-    uncertaintyScore += 2;
+  if (criticalIssues.length > 0) {
+    // Critical issues always map to HIGH uncertainty
+    for (const issue of criticalIssues.slice(0, 10)) { // Bound to 10
+      uncertaintyFlags.push({
+        signalKey: issue.signalKey,
+        reason: boundString(`Critical parse issue: ${issue.message}`, 120),
+        level: 'high'
+      });
+      uncertaintyScore += 2; // Each critical issue adds 2 to score
+    }
+    // Ensure score is high enough for LOW confidence hint
+    if (uncertaintyScore < 5) {
+      uncertaintyScore = 5; // Force LOW confidence if any critical issues exist
+    }
   }
 
   // Check for warning parse issues

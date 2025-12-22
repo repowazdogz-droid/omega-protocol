@@ -15,17 +15,43 @@ import { ArtifactKind, ArtifactRecord, ArtifactMeta, ArtifactFilter, DEFAULT_PAY
 import { hashArtifact } from './Hashing';
 import { CONTRACT_VERSION } from '../contracts/ContractVersion';
 
-const VAULT_ROOT = '/tmp/artifactVault';
+const DEFAULT_VAULT_ROOT = '/tmp/artifactVault';
 const MAX_LIST_RESULTS = 50;
+
+/**
+ * Ensures directory exists, retrying if it's removed during creation.
+ * Handles race conditions where directory is deleted by another process.
+ */
+async function ensureDirectoryExists(dirPath: string): Promise<void> {
+  const maxAttempts = 3;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      await fs.mkdir(dirPath, { recursive: true });
+      return; // Success
+    } catch (error: any) {
+      if (error.code === 'ENOENT' && attempt < maxAttempts - 1) {
+        // Directory or parent was removed, retry
+        continue;
+      }
+      // EEXIST is fine (directory already exists), other errors should be thrown
+      if (error.code !== 'EEXIST') {
+        throw error;
+      }
+      return; // EEXIST means directory exists, success
+    }
+  }
+}
 
 /**
  * File System Artifact Vault implementation.
  */
 export class FsArtifactVault implements IArtifactVault {
   private payloadSizeLimit: number;
+  private vaultRoot: string;
 
-  constructor(payloadSizeLimit: number = DEFAULT_PAYLOAD_SIZE_LIMIT) {
+  constructor(payloadSizeLimit: number = DEFAULT_PAYLOAD_SIZE_LIMIT, vaultRoot?: string) {
     this.payloadSizeLimit = payloadSizeLimit;
+    this.vaultRoot = vaultRoot ?? DEFAULT_VAULT_ROOT;
   }
 
   async put<T>(
@@ -62,21 +88,27 @@ export class FsArtifactVault implements IArtifactVault {
     };
 
     // Ensure directory exists
-    const kindDir = join(VAULT_ROOT, kind);
-    await fs.mkdir(kindDir, { recursive: true });
-
+    const kindDir = join(this.vaultRoot, kind);
+    
     // Atomic write: write to .tmp first, then rename
     const filePath = join(kindDir, `${id}.json`);
     const tmpPath = `${filePath}.tmp`;
     
+    // Ensure directories exist before write
+    await ensureDirectoryExists(this.vaultRoot);
+    await ensureDirectoryExists(kindDir);
     await fs.writeFile(tmpPath, JSON.stringify(record, null, 2), 'utf8');
+    
+    // Ensure directories exist before rename (atomic operation)
+    await ensureDirectoryExists(this.vaultRoot);
+    await ensureDirectoryExists(kindDir);
     await fs.rename(tmpPath, filePath);
 
     return meta;
   }
 
   async get<T>(kind: ArtifactKind, id: string): Promise<ArtifactRecord<T> | undefined> {
-    const filePath = join(VAULT_ROOT, kind, `${id}.json`);
+    const filePath = join(this.vaultRoot, kind, `${id}.json`);
     
     try {
       const content = await fs.readFile(filePath, 'utf8');
@@ -91,7 +123,7 @@ export class FsArtifactVault implements IArtifactVault {
   }
 
   async list(kind: ArtifactKind, filter?: ArtifactFilter): Promise<ArtifactMeta[]> {
-    const kindDir = join(VAULT_ROOT, kind);
+    const kindDir = join(this.vaultRoot, kind);
     
     try {
       const files = await fs.readdir(kindDir);
@@ -136,7 +168,7 @@ export class FsArtifactVault implements IArtifactVault {
   }
 
   async delete(kind: ArtifactKind, id: string): Promise<boolean> {
-    const filePath = join(VAULT_ROOT, kind, `${id}.json`);
+    const filePath = join(this.vaultRoot, kind, `${id}.json`);
     
     try {
       await fs.unlink(filePath);
@@ -150,17 +182,16 @@ export class FsArtifactVault implements IArtifactVault {
   }
 
   async exists(kind: ArtifactKind, id: string): Promise<boolean> {
-    const filePath = join(VAULT_ROOT, kind, `${id}.json`);
+    const filePath = join(this.vaultRoot, kind, `${id}.json`);
     
     try {
       await fs.access(filePath);
       return true;
-    } catch {
-      return false;
+    } catch (error: any) {
+      if (error.code === 'ENOENT') {
+        return false;
+      }
+      throw error;
     }
   }
 }
-
-
-
-

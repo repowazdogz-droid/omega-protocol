@@ -15,10 +15,12 @@ import {
   runLearningSession
 } from "./SessionOrchestrator";
 import {
-  ILearningStore,
+  ILearningStore
+} from "../store/ILearningStore";
+import {
   StoredSessionRecord,
   StoredLearnerState
-} from "../store/ILearningStore";
+} from "../store/StoreTypes";
 import {
   createEmptySkillGraph
 } from "../SkillGraphTypes";

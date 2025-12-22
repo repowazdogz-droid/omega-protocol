@@ -7,7 +7,18 @@ import { evaluateGate } from '../../../../spine/gates/GateEngine';
 import { GateAction, ViewerRole, Surface, ConsentState } from '../../../../spine/gates/GateTypes';
 import { ShareScope } from '../../../../spine/share/ShareTypes';
 
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 describe('Share Routes Integration', () => {
+  // Use temp directory for token store to avoid test pollution
+  const tempDir = mkdtempSync(join(tmpdir(), 'omega-share-test-'));
+
+  beforeEach(() => {
+    // Reset any global state if needed
+  });
+
   test('gate denies -> create fails', () => {
     // Simulate gate denial (adult no opt-in)
     const gateDecision = evaluateGate(GateAction.VIEW_TEACHER_RECAP, {
@@ -44,8 +55,11 @@ describe('Share Routes Integration', () => {
     });
 
     expect(gateDecision.allowed).toBe(true);
-    // Constraints should still be applied
-    expect(gateDecision.constraints).toBeDefined();
+    // Constraints should still be applied (bounded) - redactFields from nonNegotiable check
+    // Even if other constraints are empty, redactFields should be present for TeacherRecap surface
+    expect(gateDecision.constraints?.redactFields).toBeDefined();
+    expect(gateDecision.constraints?.redactFields).toContain('score');
+    expect(gateDecision.constraints?.redactFields).toContain('grade');
   });
 });
 

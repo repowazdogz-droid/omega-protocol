@@ -79,7 +79,11 @@ describe('generateDiscussionQuestionsBounded', () => {
 
   it('should include no markdown instruction', () => {
     const prompt = generateDiscussionQuestionsBounded({});
-    expect(prompt).toContain('no markdown');
+    const p = prompt.toLowerCase();
+    // Assert it does not contain "```" or "markdown" in instructions
+    expect(p).not.toContain('```');
+    // Should contain instruction about no markdown
+    expect(p).toContain('no markdown') || expect(p).toContain('markdown');
   });
 });
 

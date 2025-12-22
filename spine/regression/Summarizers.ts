@@ -41,29 +41,29 @@ export function summarizeKernelRun(run: any): Summary {
 
   // Claim IDs (bounded, max 20)
   const claimIds = boundArray(
-    run.trace.claims.map(c => c.claimId),
+    run.trace.claims.map((c: any) => c.claimId),
     20
   ).sort(); // Stable ordering
 
   // Policy notes (bounded, max 10, each max 200 chars)
   const policyNotes = boundArray(
-    (run.policyNotes || []).map(note => boundString(note, MAX_FIELD_LENGTH)),
+    (run.policyNotes || []).map((note: any) => boundString(note, MAX_FIELD_LENGTH)),
     10
   );
 
   // Highlights from trace nodes (bounded, max 12, each max 200 chars)
   const highlights = boundArray(
     run.trace.nodes
-      .filter(node => node.type === 'decision' || node.type === 'override' || node.type === 'disallow')
-      .map(node => boundString(`${node.label}: ${node.description || ''}`, MAX_FIELD_LENGTH)),
+      .filter((node: any) => node.type === 'decision' || node.type === 'override' || node.type === 'disallow')
+      .map((node: any) => boundString(`${node.label}: ${node.description || ''}`, MAX_FIELD_LENGTH)),
     12
   );
 
   return {
     outcome,
-    claimIds,
-    policyNotes,
-    highlights
+    claimIds: claimIds as string[],
+    policyNotes: policyNotes as string[],
+    highlights: highlights as string[]
   };
 }
 
@@ -80,27 +80,27 @@ export function summarizeOrchestratorRun(run: any): Summary {
 
   // Claim IDs from summary claims (bounded, max 20)
   const claimIds = boundArray(
-    run.summaryClaims.map(c => c.claimId || c.title),
+    run.summaryClaims.map((c: any) => c.claimId || c.title),
     20
   ).sort(); // Stable ordering
 
   // Policy notes (bounded, max 10, each max 200 chars)
   const policyNotes = boundArray(
-    (run.policyNotes || []).map(note => boundString(note, MAX_FIELD_LENGTH)),
+    (run.policyNotes || []).map((note: any) => boundString(note, MAX_FIELD_LENGTH)),
     10
   );
 
   // Highlights from trace highlights (bounded, max 12, each max 200 chars)
   const highlights = boundArray(
-    run.boundedTraceHighlights.map(h => boundString(`${h.label}: ${h.description || ''}`, MAX_FIELD_LENGTH)),
+    run.boundedTraceHighlights.map((h: any) => boundString(`${h.label}: ${h.description || ''}`, MAX_FIELD_LENGTH)),
     12
   );
 
   return {
     outcome,
-    claimIds,
-    policyNotes,
-    highlights
+    claimIds: claimIds as string[],
+    policyNotes: policyNotes as string[],
+    highlights: highlights as string[]
   };
 }
 

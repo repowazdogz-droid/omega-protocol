@@ -8,10 +8,12 @@
  */
 
 import {
-  ILearningStore,
+  ILearningStore
+} from "./ILearningStore";
+import {
   StoredLearnerState,
   StoredSessionRecord
-} from "./ILearningStore";
+} from "./StoreTypes";
 import { KernelRunRecord } from "../../../kernels/surfaces/learning/KernelSurfaceTypes";
 import { OrchestratorRunRecord } from "./OrchestratorRunTypes";
 
@@ -108,8 +110,14 @@ export class InMemoryLearningStore implements ILearningStore {
   }
   
   appendKernelRun(learnerId: string, run: KernelRunRecord): void {
+    // Ensure run has learnerId set
+    const runWithLearnerId: KernelRunRecord = {
+      ...run,
+      learnerId: run.learnerId || learnerId
+    };
+    
     // Store kernel run
-    this.kernelRuns.set(run.runId, run);
+    this.kernelRuns.set(runWithLearnerId.runId, runWithLearnerId);
 
     // Update learner kernel runs index
     let runIds = this.learnerKernelRuns.get(learnerId) || [];
@@ -135,7 +143,7 @@ export class InMemoryLearningStore implements ILearningStore {
     if (state) {
       state.kernelRuns = runIds
         .map(id => this.kernelRuns.get(id))
-        .filter((r): r is KernelRunRecord => r !== undefined)
+        .filter((r): r is KernelRunRecord => r !== undefined && r.learnerId === learnerId)
         .slice(0, MAX_KERNEL_RUNS_PER_LEARNER);
       this.learnerStates.set(learnerId, state);
     }

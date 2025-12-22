@@ -111,24 +111,25 @@ export function canRevealSolution(
   const current = SCAFFOLD_LADDER.get(state.currentStep);
   if (!current) return false;
   
-  // Must be at a step that allows solution revelation
-  if (!current.canRevealSolution) return false;
-  
   // Must have made an attempt
   if (!state.hasMadeAttempt) return false;
   
   // Must have offered hint or counterexample at least once
   if (state.hintsOffered === 0 && state.counterexamplesOffered === 0) {
-    // Exception: if learner explicitly requested solution AND we've tried scaffolding
-    if (state.hasRequestedSolution && 
-        (state.currentStep === ScaffoldStep.OfferHint || 
-         state.currentStep === ScaffoldStep.OfferCounterexampleOrTest)) {
-      return true;
-    }
     return false;
   }
   
-  return true;
+  // Check if we can transition to RevealMinimalSolution from current step
+  if (canTransitionTo(state.currentStep, ScaffoldStep.RevealMinimalSolution)) {
+    return true;
+  }
+  
+  // Or if we're already at a step that allows solution revelation
+  if (current.canRevealSolution) {
+    return true;
+  }
+  
+  return false;
 }
 
 /**
@@ -148,7 +149,8 @@ export function determineNextStep(
   // If learner explicitly requests solution
   if (responseLower.includes("solution") || 
       responseLower.includes("answer") || 
-      responseLower.includes("tell me")) {
+      responseLower.includes("tell me") ||
+      responseLower.includes("can you tell")) {
     state.hasRequestedSolution = true;
     
     // Can only reveal if conditions are met
@@ -187,18 +189,34 @@ export function determineNextStep(
   
   // If learner asks clarifying question, stay at current step or go back
   if (responseLower.includes("?") || 
-      responseLower.includes("what") || 
-      responseLower.includes("how") ||
-      responseLower.includes("why")) {
+      (responseLower.includes("what") && responseLower.includes("?")) || 
+      (responseLower.includes("how") && responseLower.includes("?")) ||
+      (responseLower.includes("why") && responseLower.includes("?"))) {
     // Stay at current step to address clarification
     return state.currentStep;
   }
   
-  // Default progression: advance one step if possible
-  if (current.canAdvanceTo.length > 0) {
-    const nextStep = current.canAdvanceTo[0];
-    if (canTransitionTo(state.currentStep, nextStep)) {
-      return nextStep;
+  // If at ClarifyGoal and learner provides a substantive response about their goal
+  if (state.currentStep === ScaffoldStep.ClarifyGoal && 
+      responseLower.length > 15 &&
+      (responseLower.includes("want") || 
+       responseLower.includes("learn") || 
+       responseLower.includes("understand") ||
+       responseLower.includes("goal"))) {
+    // Advance to next step
+    if (current.canAdvanceTo.length > 0) {
+      return current.canAdvanceTo[0];
+    }
+  }
+  
+  // If learner provides a substantive response (not just a question), advance
+  if (responseLower.length > 10 && !responseLower.includes("?")) {
+    // Default progression: advance one step if possible
+    if (current.canAdvanceTo.length > 0) {
+      const nextStep = current.canAdvanceTo[0];
+      if (canTransitionTo(state.currentStep, nextStep)) {
+        return nextStep;
+      }
     }
   }
   

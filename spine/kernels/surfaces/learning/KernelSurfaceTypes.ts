@@ -31,7 +31,7 @@ export interface KernelRunRecord {
     /** Human-readable label */
     label: string;
     /** Confidence level */
-    confidence: "Low" | "Medium" | "High";
+    confidence: "Low" | "Medium" | "High" | "Unknown";
     /** Short rationale (max 200 chars) */
     rationale: string;
   };

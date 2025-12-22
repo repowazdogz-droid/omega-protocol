@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { isGeminiEnabled } from '../../../../spine/llm/config/GeminiConfig';
-import { generateText } from '../../../../spine/llm/gemini/GeminiClient';
+import { generateText } from '../../../../spine/llm/LLMRouter';
 import {
   explainKernelRunBounded,
   explainRegressionDiffBounded,
@@ -20,6 +20,11 @@ import {
   validateBoundedExplanation,
   validateBoundedQuestions
 } from '../../../../spine/llm/LLMContracts';
+import { OmegaMode } from '../../../../spine/llm/modes/OmegaModes';
+import { putArtifact } from '@spine/artifacts/ArtifactVault';
+import { ArtifactKind } from '@spine/artifacts/ArtifactTypes';
+import type { LLMRunArtifactPayload } from '@spine/artifacts/ArtifactTypes';
+import { boundText, hashText } from '../../../../spine/llm/modes/llmRunUtils';
 
 const MAX_PAYLOAD_SIZE = 50 * 1024; // 50KB
 
@@ -60,7 +65,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { kind, payload, mode } = body;
+    const { kind, payload, mode, omegaMode } = body;
+
+    // Extract Omega mode if provided (optional)
+    const omega = omegaMode ? { mode: omegaMode as OmegaMode } : undefined;
 
     if (!kind || typeof kind !== 'string') {
       return NextResponse.json(
@@ -123,25 +131,34 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // Call Gemini
+    // Call LLM router (Omega lens applied internally if omega provided)
     const result = await generateText({
       user: prompt,
       maxOutputChars,
       temperature: 0.7,
-      jsonSchema
+      jsonSchema,
+      omega
     });
 
     if (!result.ok || !result.text) {
       return NextResponse.json(
-        { ok: false, error: result.error || 'Failed to generate explanation' },
+        {
+          ok: false,
+          error: result.error || 'Failed to generate explanation',
+          ...(result.omegaAudit && { omegaAudit: result.omegaAudit }),
+          ...(result.omegaRetry && { omegaRetry: result.omegaRetry }),
+          ...(result.omegaMeta && { omegaMeta: result.omegaMeta }),
+        },
         { status: 500 }
       );
     }
 
+    const { text, omegaAudit, omegaRetry, omegaMeta } = result;
+
     // Process result based on kind
     if (kind === 'questions') {
       // Parse JSON array
-      const parseResult = safeJsonParse<string[]>(result.text);
+      const parseResult = safeJsonParse<string[]>(text);
       if (!parseResult.ok || !Array.isArray(parseResult.data)) {
         return NextResponse.json(
           { ok: false, error: `Failed to parse questions: ${parseResult.error}` },
@@ -150,39 +167,138 @@ export async function POST(request: NextRequest) {
       }
 
       const validated = validateBoundedQuestions(parseResult.data);
+      
+      // Store as artifact (best-effort, don't fail request)
+      try {
+        const promptText = JSON.stringify(payload ?? {}, null, 2);
+        const outputText = validated.questions.join("\n- ");
+
+        const llmRunPayload: LLMRunArtifactPayload = {
+          kind: "explain",
+          createdAtIso: new Date().toISOString(),
+          prompt: {
+            text: boundText(promptText, 2000),
+            hash: hashText(promptText),
+          },
+          output: {
+            text: boundText(outputText, 2000),
+          },
+        };
+
+        await putArtifact(
+          ArtifactKind.LLM_RUN,
+          { meta: { contractVersion: '1.0.0' }, ...llmRunPayload },
+          {
+            learnerId: "public",
+            omega: omegaMeta,
+          }
+        );
+      } catch {
+        // swallow: logging must never break the endpoint
+      }
+
       return NextResponse.json({
         ok: true,
-        questions: validated.questions
+        questions: validated.questions,
+        ...(omegaAudit && { omegaAudit }),
+        ...(omegaRetry && { omegaRetry }),
+        ...(omegaMeta && { omegaMeta })
       });
     } else {
       // Parse bullet points or plain text (split by newlines or bullets)
-      const text = result.text.trim();
+      const trimmedText = text.trim();
       
       if (mode === 'plain') {
         // Plain language: split into sentences, max 5
-        const sentences = text
+        const sentences = trimmedText
           .split(/[.!?]+/)
           .map(s => s.trim())
           .filter(s => s.length > 0)
           .slice(0, 5);
         
         const validated = validateBoundedExplanation(sentences);
+        
+        // Store as artifact (best-effort, don't fail request)
+        try {
+          const promptText = JSON.stringify(payload ?? {}, null, 2);
+          const outputText = validated.bullets.join("\n- ");
+
+          const llmRunPayload: LLMRunArtifactPayload = {
+            kind: "explain",
+            createdAtIso: new Date().toISOString(),
+            prompt: {
+              text: boundText(promptText, 2000),
+              hash: hashText(promptText),
+            },
+            output: {
+              text: boundText(outputText, 2000),
+            },
+          };
+
+          await putArtifact(
+            ArtifactKind.LLM_RUN,
+            { meta: { contractVersion: '1.0.0' }, ...llmRunPayload },
+            {
+              learnerId: "public",
+              omega: omegaMeta,
+            }
+          );
+        } catch {
+          // swallow: logging must never break the endpoint
+        }
+
         return NextResponse.json({
           ok: true,
-          bullets: validated.bullets
+          bullets: validated.bullets,
+          ...(omegaAudit && { omegaAudit }),
+          ...(omegaRetry && { omegaRetry }),
+          ...(omegaMeta && { omegaMeta })
         });
       } else {
         // Bullets: split by newlines or bullets
-        const bullets = text
+        const bullets = trimmedText
           .split(/\n+/)
           .map(line => line.replace(/^[-*•]\s*/, '').trim())
           .filter(line => line.length > 0)
           .slice(0, 8); // Max 8 bullets
 
         const validated = validateBoundedExplanation(bullets);
+        
+        // Store as artifact (best-effort, don't fail request)
+        try {
+          const promptText = JSON.stringify(payload ?? {}, null, 2);
+          const outputText = validated.bullets.join("\n- ");
+
+          const llmRunPayload: LLMRunArtifactPayload = {
+            kind: "explain",
+            createdAtIso: new Date().toISOString(),
+            prompt: {
+              text: boundText(promptText, 2000),
+              hash: hashText(promptText),
+            },
+            output: {
+              text: boundText(outputText, 2000),
+            },
+          };
+
+          await putArtifact(
+            ArtifactKind.LLM_RUN,
+            { meta: { contractVersion: '1.0.0' }, ...llmRunPayload },
+            {
+              learnerId: "public",
+              omega: omegaMeta,
+            }
+          );
+        } catch {
+          // swallow: logging must never break the endpoint
+        }
+
         return NextResponse.json({
           ok: true,
-          bullets: validated.bullets
+          bullets: validated.bullets,
+          ...(omegaAudit && { omegaAudit }),
+          ...(omegaRetry && { omegaRetry }),
+          ...(omegaMeta && { omegaMeta })
         });
       }
     }

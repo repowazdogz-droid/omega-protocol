@@ -9,7 +9,7 @@
  */
 
 import {
-  ViewerRole,
+  ViewerRole as StoreViewerRole,
   VisibilityPolicy,
   StoredSessionRecord,
   FilteredSessionRecord,
@@ -19,6 +19,8 @@ import {
 import { LearnerProfile, AgeBand } from "../LearnerTypes";
 import { KernelRunRecord } from "../../../kernels/surfaces/learning/KernelSurfaceTypes";
 import { OrchestratorRunRecord } from "./OrchestratorRunTypes";
+import { evaluateGate } from "@spine/gates/GateEngine";
+import { GateAction, ViewerRole, Surface, ConsentState } from "@spine/gates/GateTypes";
 
 /**
  * Gets visibility policy for a learner profile.
@@ -47,7 +49,7 @@ export function getVisibilityPolicy(
  */
 export function filterSessionForViewer(
   record: StoredSessionRecord,
-  role: ViewerRole,
+  role: StoreViewerRole,
   policy: VisibilityPolicy
 ): FilteredSessionRecord {
   // Check if viewer has access
@@ -140,7 +142,7 @@ export function filterSessionForViewer(
  */
 export function filterLearnerStateForViewer(
   state: StoredLearnerState,
-  role: ViewerRole,
+  role: StoreViewerRole,
   policy: VisibilityPolicy
 ): FilteredLearnerState {
   // Check if viewer has access
@@ -206,6 +208,10 @@ export function filterLearnerStateForViewer(
           });
 
           if (gateDecision.allowed) {
+    // Apply constraints from gate
+    const maxTraceNodes = gateDecision.constraints?.maxTraceNodes ?? 20;
+    const redactFields = gateDecision.constraints?.redactFields || [];
+    
     // Filter out internal/system markers from trace nodes
     const filteredKernelRuns = state.kernelRuns.map(run => {
       // Filter claims (strip internal/system)
@@ -225,7 +231,7 @@ export function filterLearnerStateForViewer(
         .filter(node => {
           const label = node.label.toLowerCase();
           const desc = node.description.toLowerCase();
-          const shouldFilter = redactFields.some(field => 
+          const shouldFilter = redactFields.some((field: string) => 
             label.includes(field.toLowerCase()) || desc.includes(field.toLowerCase())
           );
           return !shouldFilter;

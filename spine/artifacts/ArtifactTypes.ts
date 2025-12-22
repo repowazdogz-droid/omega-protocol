@@ -8,6 +8,7 @@
  */
 
 import { CONTRACT_VERSION } from '../contracts/ContractVersion';
+import type { OmegaMeta } from '../llm/modes/OmegaMeta';
 
 /**
  * ArtifactKind: Types of artifacts stored in the vault.
@@ -25,6 +26,10 @@ export enum ArtifactKind {
   TEACHER_RECAP = 'TEACHER_RECAP',
   /** Contact inquiry */
   CONTACT_INQUIRY = 'CONTACT_INQUIRY',
+  /** LLM run (explain/specDraft) */
+  LLM_RUN = 'LLM_RUN',
+  /** Omega mode comparison (human review) */
+  OMEGA_COMPARE = 'OMEGA_COMPARE',
   /** Legacy: Learning bundle (session + board + thought objects) */
   bundle = 'bundle',
   /** Legacy: Single kernel run record */
@@ -60,6 +65,8 @@ export interface ArtifactMeta {
   sizeBytes?: number;
   /** Optional TTL in seconds */
   ttlSeconds?: number;
+  /** Optional: Omega mode metadata */
+  omega?: OmegaMeta;
 }
 
 /**
@@ -126,6 +133,10 @@ export interface ArtifactManifest {
   redactionsApplied: string[];
   /** Optional notes (bounded, max 500 chars) */
   notes?: string;
+  /** Optional tags (bounded, max 10) */
+  tags?: string[];
+  /** Optional: Omega mode metadata */
+  omega?: OmegaMeta;
 }
 
 /**
@@ -136,5 +147,26 @@ export interface ArtifactBundle {
   manifest: ArtifactManifest;
   /** Payloads (keyed by file name) */
   payloads: Record<string, any>;
+}
+
+/**
+ * LLMRunArtifactPayload: Payload for LLM run artifacts.
+ * Bounded: prompt/output text max 2000 chars each.
+ */
+export interface LLMRunArtifactPayload {
+  prompt: {
+    /** Bounded prompt text (max 2000 chars) */
+    text: string;
+    /** SHA-256 hash of full prompt */
+    hash: string;
+  };
+  output: {
+    /** Bounded output text (max 2000 chars) */
+    text: string;
+  };
+  /** LLM run kind */
+  kind: "explain" | "specDraft";
+  /** Creation timestamp (ISO string) */
+  createdAtIso: string;
 }
 

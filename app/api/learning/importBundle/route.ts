@@ -4,6 +4,7 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import { FsArtifactVault } from '../../../../spine/artifacts/FsArtifactVault';
 import { ArtifactKind } from '../../../../spine/artifacts/ArtifactTypes';
+import { putArtifact } from 'spine/artifacts/ArtifactVault';
 
 export async function POST(request: NextRequest) {
   try {
@@ -98,17 +99,17 @@ export async function POST(request: NextRequest) {
       const boardStatePath = join(oldStorageDir, 'learningBoard.json');
       const thoughtObjectsPath = join(oldStorageDir, 'thoughtObjects.json');
 
-      if (bundlePayload.meta) {
-        await writeFile(metaPath, JSON.stringify(bundlePayload.meta, null, 2));
+      if (bundleData.meta) {
+        await writeFile(metaPath, JSON.stringify(bundleData.meta, null, 2));
       }
-      if (bundlePayload.sessionlog) {
-        await writeFile(sessionLogPath, JSON.stringify(bundlePayload.sessionlog, null, 2));
+      if (bundleData.sessionlog || bundleData.events) {
+        await writeFile(sessionLogPath, JSON.stringify(bundleData.sessionlog || bundleData.events, null, 2));
       }
-      if (bundlePayload.learningBoard) {
-        await writeFile(boardStatePath, JSON.stringify(bundlePayload.learningBoard, null, 2));
+      if (bundleData.learningBoard || bundleData.boardState) {
+        await writeFile(boardStatePath, JSON.stringify(bundleData.learningBoard || bundleData.boardState, null, 2));
       }
-      if (bundlePayload.thoughtObjects) {
-        await writeFile(thoughtObjectsPath, JSON.stringify(bundlePayload.thoughtObjects, null, 2));
+      if (bundleData.thoughtObjects || bundleData.objects) {
+        await writeFile(thoughtObjectsPath, JSON.stringify(bundleData.thoughtObjects || bundleData.objects, null, 2));
       }
     }
 

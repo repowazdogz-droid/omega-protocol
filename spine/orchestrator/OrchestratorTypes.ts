@@ -11,6 +11,7 @@ import { CONTRACT_VERSION } from '../contracts/ContractVersion';
 import { PolicyPackId } from '../policies/PolicyPackTypes';
 import { KernelRunRecord } from '../kernels/surfaces/learning/KernelSurfaceTypes';
 import { ThoughtObject } from '../../app/learning/board/ThoughtObjects';
+import type { OmegaMeta } from '../llm/modes/OmegaMeta';
 
 /**
  * KernelNodeSpec: Specification for a single kernel node in the graph.
@@ -81,6 +82,8 @@ export interface OrchestratorNodeResult {
   policyNotes: string[];
   /** Optional: Thought objects (bounded, max 5) */
   thoughtObjects?: ThoughtObject[];
+  /** Optional: Omega mode metadata (propagated from KernelResult) */
+  omega?: OmegaMeta;
 }
 
 /**
@@ -120,7 +123,10 @@ export interface OrchestratorRun {
   terminalOutcome: string;
   /** Terminal node ID */
   terminalNodeId: string;
+  /** Optional: Omega mode metadata */
+  omega?: OmegaMeta;
 }
+
 
 
 

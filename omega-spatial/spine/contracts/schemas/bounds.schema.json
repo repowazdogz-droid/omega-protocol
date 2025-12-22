@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "omega://spine/contracts/bounds.schema.json",
+  "title": "Bounds",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scope", "explicitExclusions"],
+  "properties": {
+    "scope": {
+      "type": "string",
+      "enum": ["conceptual_only", "non_operational", "demo_safe", "research_only", "custom"]
+    },
+    "explicitExclusions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "simulation",
+          "prediction",
+          "optimization",
+          "recommendations",
+          "control",
+          "procedures",
+          "certification_claims",
+          "autonomy"
+        ]
+      },
+      "uniqueItems": true
+    },
+    "assumptionPolicy": {
+      "type": "string",
+      "enum": ["declare_all", "declare_key_only", "unknown"],
+      "default": "declare_all"
+    },
+    "notes": { "type": "string", "maxLength": 500 }
+  }
+}
+
+
