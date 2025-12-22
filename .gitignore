@@ -17,3 +17,14 @@ __pycache__/
 .env.local
 .env*.local
 
+# --- Omega repo hygiene ---
+node_modules/
+.next/
+out/
+dist/
+tmp/
+.DS_Store
+*.log
+*.tsbuildinfo
+Archive/
+
