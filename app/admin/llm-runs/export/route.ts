@@ -1,5 +1,7 @@
 // app/admin/llm-runs/export/route.ts
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { listArtifacts, getArtifact } from "@spine/artifacts/ArtifactVault";
 import { ArtifactKind } from "@spine/artifacts/ArtifactTypes";
@@ -177,6 +179,8 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
 
 
 

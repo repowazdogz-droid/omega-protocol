@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * Share Token List API
  * 
@@ -33,6 +35,8 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
 
 
 

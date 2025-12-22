@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getStore } from '../../../../spine/learning/platform/store/InMemoryStoreSingleton'
 import { loadPersistedState } from '../../../learning/persist/LearningPersist'
@@ -118,6 +120,8 @@ function generateExplainBackPrompt(
         : "Can you explain this in your own words?"
   }
 }
+
+
 
 
 

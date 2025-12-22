@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * Artifact List API
  * 
@@ -32,6 +34,8 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
 
 
 

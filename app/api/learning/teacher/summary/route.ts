@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server'
 import { getStore } from '../../../../../spine/learning/platform/store/InMemoryStoreSingleton'
 import { ViewerRole } from '../../../../../spine/learning/platform/store/StoreTypes'
@@ -132,6 +134,8 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+
 
 
 

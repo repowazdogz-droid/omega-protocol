@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AgeBand } from '../../spine/learning/platform/LearnerTypes'
 import { TutorMode } from '../../spine/learning/platform/dialogue/DialogTypes'
@@ -66,7 +66,7 @@ const ACTION_CHIPS = [
   "I'm stuck"
 ]
 
-export default function LearningPage() {
+function LearningPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [context, setContext] = useState<LearningContext | null>(null)
@@ -1980,5 +1980,12 @@ export default function LearningPage() {
         </div>
       )}
     </div>
+  )
+}
+export default function LearningPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LearningPageContent />
+    </Suspense>
   )
 }
