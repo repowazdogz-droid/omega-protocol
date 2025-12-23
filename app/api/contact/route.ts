@@ -111,9 +111,11 @@ async function sendEmailNotification(inquiry: {
     }
 
     // Try to use nodemailer if available, otherwise fall back to logging
+    // Use dynamic import with string to prevent webpack from trying to resolve it
     let nodemailer: any;
     try {
-      nodemailer = await import('nodemailer');
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      nodemailer = require('nodemailer');
     } catch {
       // nodemailer not installed - log email details
       console.log('[Contact] Email (nodemailer not installed):', {
