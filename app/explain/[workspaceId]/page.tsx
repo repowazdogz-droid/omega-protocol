@@ -69,21 +69,6 @@ export default function ExplainPage() {
         : sourceText.trim() || 'Untitled Explanation';
       setTitle(titleText);
 
-      // TEMP DIAG (remove after confirming):
-      if (typeof window !== 'undefined') {
-        // eslint-disable-next-line no-console
-        console.log('[OmegaRC] room counts', {
-          claim: workspace.claim?.length ?? 0,
-          assumptions: workspace.assumptions?.length ?? 0,
-          evidence: workspace.evidence?.length ?? 0,
-          missing: workspace.missing?.length ?? 0,
-          framings: workspace.framings?.length ?? 0,
-          whatWouldChangeAnalysis: workspace.whatWouldChangeAnalysis?.length ?? 0,
-          constraints: workspace.constraints?.length ?? 0,
-          tradeoffs: workspace.tradeoffs?.length ?? 0,
-        });
-      }
-
       // Check if scaffold failed (has source but no content)
       const hasSource = workspace.source.content.trim().length > 0;
       const hasContent = workspace.assumptions.length > 0 || 
