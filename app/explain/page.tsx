@@ -152,15 +152,33 @@ export default function ExplainPage() {
       }
 
       // Create workspace with scaffolded content
-      // Helper to convert array to WorkspaceItem[] with proper filtering
-      const toItems = (arr: unknown): WorkspaceItem[] =>
-        (Array.isArray(arr) ? arr : [])
-          .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
-          .map((text, idx) => ({
-            id: `scaffold-${Date.now()}-${idx}`,
-            text: text.trim(),
-            createdAt: Date.now(),
-          }));
+      // Helper to split multiline strings into separate items
+      function splitMultilineText(text: string): string[] {
+        return text
+          .split(/\r?\n+/)
+          .map((line) => line.replace(/^\s*[-•]\s+/, '').trim())
+          .filter((line) => line.length > 0);
+      }
+
+      // Helper to convert array to WorkspaceItem[] with proper filtering and multiline splitting
+      const toItems = (arr: unknown): WorkspaceItem[] => {
+        if (!Array.isArray(arr)) return [];
+        const items: WorkspaceItem[] = [];
+        let idx = 0;
+        for (const raw of arr) {
+          if (typeof raw !== 'string' || !raw.trim()) continue;
+          // Split multiline strings into separate items
+          const lines = splitMultilineText(raw.trim());
+          for (const line of lines) {
+            items.push({
+              id: `scaffold-${Date.now()}-${idx++}`,
+              text: line,
+              createdAt: Date.now(),
+            });
+          }
+        }
+        return items;
+      };
 
       const workspaceId = crypto.randomUUID();
       const workspace = {

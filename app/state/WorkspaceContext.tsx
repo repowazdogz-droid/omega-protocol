@@ -26,13 +26,59 @@ function getStorageKey(workspaceId: string): string {
   return `${STORAGE_PREFIX}${workspaceId}`;
 }
 
+function splitMultilineText(text: string): string[] {
+  return text
+    .split(/\r?\n+/)
+    .map((line) => line.replace(/^\s*[-•]\s+/, '').trim())
+    .filter((line) => line.length > 0);
+}
+
+function normalizeMultilineItems(items: WorkspaceItem[]): WorkspaceItem[] {
+  const out: WorkspaceItem[] = [];
+  for (const item of items || []) {
+    const text = item?.text || '';
+    const lines = splitMultilineText(text);
+    if (lines.length <= 1) {
+      // Single line or empty, keep as-is
+      if (text.trim()) {
+        out.push(item);
+      }
+    } else {
+      // Split multiline item into multiple items
+      for (const line of lines) {
+        out.push({
+          ...item,
+          id: crypto.randomUUID(),
+          text: line,
+          createdAt: item.createdAt ?? Date.now(),
+        });
+      }
+    }
+  }
+  return out;
+}
+
 function loadWorkspace(workspaceId: string): Workspace | null {
   if (typeof window === 'undefined') return null;
   
   try {
     const stored = localStorage.getItem(getStorageKey(workspaceId));
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Normalize multiline items in all rooms
+      const normalized: Workspace = {
+        ...parsed,
+        claim: normalizeMultilineItems(parsed.claim || []),
+        assumptions: normalizeMultilineItems(parsed.assumptions || []),
+        evidence: normalizeMultilineItems(parsed.evidence || []),
+        missing: normalizeMultilineItems(parsed.missing || parsed.constraints || []),
+        framings: normalizeMultilineItems(parsed.framings || parsed.tradeoffs || []),
+        constraints: normalizeMultilineItems(parsed.constraints || []),
+        tradeoffs: normalizeMultilineItems(parsed.tradeoffs || []),
+        causal: normalizeMultilineItems(parsed.causal || []),
+        whatWouldChangeAnalysis: normalizeMultilineItems(parsed.whatWouldChangeAnalysis || []),
+      };
+      return normalized;
     }
   } catch (error) {
     console.error('Failed to load workspace:', error);
@@ -131,7 +177,7 @@ export function WorkspaceProvider({
   useEffect(() => {
     const loaded = loadWorkspace(workspaceId);
     if (loaded) {
-      // Normalize workspace: ensure all fields exist (for older workspaces)
+      // loadWorkspace already normalizes multiline items, just ensure all fields exist
       const normalizedWorkspace: Workspace = {
         ...loaded,
         summary: loaded.summary || '',
