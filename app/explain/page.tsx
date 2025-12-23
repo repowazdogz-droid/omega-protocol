@@ -372,6 +372,21 @@ export default function ExplainPage() {
               )}
             </div>
 
+            {submitError && (
+              <div
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.75rem',
+                  backgroundColor: '#fee2e2',
+                  border: '1px solid #fca5a5',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.875rem',
+                  color: '#991b1b',
+                }}
+              >
+                {submitError}
+              </div>
+            )}
             {fetchError && (
               <div
                 style={{
