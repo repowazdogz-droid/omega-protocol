@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { WorkspaceItem } from '@/app/state/types';
 
 export default function ExplainPage() {
   const router = useRouter();
