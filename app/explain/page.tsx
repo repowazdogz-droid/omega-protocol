@@ -9,6 +9,7 @@ export default function ExplainPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [fetchError, setFetchError] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const exampleChips = [
     { label: 'Public claim', text: 'AI will replace half of all jobs in 5 years' },
@@ -50,6 +51,7 @@ export default function ExplainPage() {
     setIsLoading(true);
     setStatusMessage('');
     setFetchError('');
+    setSubmitError(null);
 
     let contentToAnalyze = inputValue.trim();
 
@@ -78,12 +80,13 @@ export default function ExplainPage() {
         body: JSON.stringify({ sourceContent: contentToAnalyze }),
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Scaffold API failed: ${response.status}`);
+      const data = await response.json().catch(() => ({}));
+      
+      if (!response.ok || data?.ok === false) {
+        setSubmitError(data?.error || `Request failed (${response.status}). Check server logs.`);
+        setIsLoading(false);
+        return;
       }
-
-      const data = await response.json();
 
       // Handle validation errors from server (should be rare since we validate client-side)
       if (data.validationError === 'url_not_supported') {

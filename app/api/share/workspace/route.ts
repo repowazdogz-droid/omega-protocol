@@ -1,11 +1,12 @@
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
 import fs from "fs/promises";
 import crypto from "crypto";
 
-const SHARE_DIR = path.join(process.cwd(), 'tmp', 'shares');
+// Use /tmp for Vercel (read-write at runtime)
+const SHARE_DIR = "/tmp/omega-shares";
 const MAX_SHARE_BYTES = 200 * 1024; // 200KB
 const SHARE_TTL_HOURS = 24 * 7; // 7 days
 
@@ -31,7 +32,7 @@ async function cleanupExpiredShares() {
     const now = Date.now();
     for (const file of files) {
       if (file.endsWith('.json')) {
-        const filePath = path.join(SHARE_DIR, file);
+        const filePath = `${SHARE_DIR}/${file}`;
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const metadata: ShareMetadata = JSON.parse(content);
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
       createdAt: now,
       expiresAt: now + (SHARE_TTL_HOURS * 60 * 60 * 1000),
     };
-    const file = path.join(SHARE_DIR, `${t}.json`);
+    const file = `${SHARE_DIR}/${t}.json`;
     await fs.writeFile(file, JSON.stringify(metadata, null, 2), 'utf8');
 
     // Build absolute URL from request
@@ -102,7 +103,7 @@ export async function GET(req: NextRequest) {
     const t = req.nextUrl.searchParams.get("token");
     if (!t) return NextResponse.json({ error: "Missing token" }, { status: 400 });
 
-    const file = path.join(SHARE_DIR, `${t}.json`);
+    const file = `${SHARE_DIR}/${t}.json`;
     
     let raw: string;
     try {

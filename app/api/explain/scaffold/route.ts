@@ -3,6 +3,9 @@ import { generateText } from '../../../../spine/llm/LLMRouter';
 import { OmegaMode } from '../../../../spine/llm/modes/OmegaModes';
 import { RoomKey } from '@/app/state/types';
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const MAX_INPUT_LENGTH = 8000; // Hard limit for reliability
 
 type AnalysisMode = 'claim'; // Always claim mode for short-form
@@ -73,6 +76,23 @@ function validateInput(content: string): { error: string; limit?: number } | nul
 
 export async function POST(request: NextRequest) {
   try {
+    // Early env guard BEFORE any model/client init
+    const requiredEnv = [
+      "OPENAI_API_KEY",
+    ];
+
+    for (const k of requiredEnv) {
+      if (!process.env[k] || String(process.env[k]).trim() === "") {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: `Server misconfigured: missing ${k}. Add it in Vercel Project → Settings → Environment Variables, then redeploy.`,
+          },
+          { status: 500 }
+        );
+      }
+    }
+
     const body = await request.json();
     const content = body.sourceContent?.trim() ?? '';
     const only = body.only as string | undefined; // Optional: 'assumptions', 'evidence', etc.
