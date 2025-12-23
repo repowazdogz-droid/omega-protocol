@@ -151,6 +151,16 @@ export default function ExplainPage() {
       }
 
       // Create workspace with scaffolded content
+      // Helper to convert array to WorkspaceItem[] with proper filtering
+      const toItems = (arr: unknown): WorkspaceItem[] =>
+        (Array.isArray(arr) ? arr : [])
+          .filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
+          .map((text, idx) => ({
+            id: `scaffold-${Date.now()}-${idx}`,
+            text: text.trim(),
+            createdAt: Date.now(),
+          }));
+
       const workspaceId = crypto.randomUUID();
       const workspace = {
         id: workspaceId,
@@ -159,32 +169,21 @@ export default function ExplainPage() {
           type: 'text' as const,
           content: inputValue.trim(), // Store original input
         },
-        assumptions: (scaffold.assumptions || []).map((text: string, idx: number) => ({
-          id: `scaffold-assumption-${idx}`,
-          text,
-          createdAt: Date.now(),
-        })),
-        evidence: (scaffold.evidence || []).map((text: string, idx: number) => ({
-          id: `scaffold-evidence-${idx}`,
-          text,
-          createdAt: Date.now(),
-        })),
+        // Map scaffold.summary to claim (single item)
+        claim: typeof scaffold?.summary === 'string' && scaffold.summary.trim()
+          ? [{ id: `scaffold-claim-${Date.now()}`, text: scaffold.summary.trim(), createdAt: Date.now() }]
+          : [],
+        assumptions: toItems(scaffold?.assumptions),
+        evidence: toItems(scaffold?.evidence),
+        // Map scaffold.constraints to both missing (UI) and constraints (internal)
+        missing: toItems(scaffold?.constraints),
+        constraints: toItems(scaffold?.constraints),
+        // Map scaffold.tradeoffs to both framings (UI) and tradeoffs (internal)
+        framings: toItems(scaffold?.tradeoffs),
+        tradeoffs: toItems(scaffold?.tradeoffs),
         causal: [],
-        constraints: (scaffold.constraints || []).map((text: string, idx: number) => ({
-          id: `scaffold-constraint-${idx}`,
-          text,
-          createdAt: Date.now(),
-        })),
-        tradeoffs: (scaffold.tradeoffs || []).map((text: string, idx: number) => ({
-          id: `scaffold-tradeoff-${idx}`,
-          text,
-          createdAt: Date.now(),
-        })),
-        whatWouldChangeAnalysis: (scaffold.whatWouldChangeAnalysis ?? []).map((text: string, idx: number) => ({
-          id: `scaffold-whatwouldchange-${idx}`,
-          text,
-          createdAt: Date.now(),
-        })),
+        whatWouldChangeAnalysis: toItems(scaffold?.whatWouldChangeAnalysis),
+        createdAt: Date.now(),
       };
 
       // Store in localStorage

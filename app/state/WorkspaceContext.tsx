@@ -136,9 +136,15 @@ export function WorkspaceProvider({
         ...loaded,
         summary: loaded.summary || '',
         claim: loaded.claim ?? [],
-        missing: loaded.missing ?? [],
-        framings: loaded.framings ?? [],
+        assumptions: loaded.assumptions ?? [],
+        evidence: loaded.evidence ?? [],
+        missing: loaded.missing ?? (loaded.constraints ?? []), // Map constraints to missing if missing not present
+        framings: loaded.framings ?? (loaded.tradeoffs ?? []), // Map tradeoffs to framings if framings not present
+        constraints: loaded.constraints ?? [],
+        tradeoffs: loaded.tradeoffs ?? [],
+        causal: loaded.causal ?? [],
         whatWouldChangeAnalysis: loaded.whatWouldChangeAnalysis ?? [],
+        createdAt: loaded.createdAt ?? Date.now(),
       };
       setWorkspace(normalizedWorkspace);
     } else {
