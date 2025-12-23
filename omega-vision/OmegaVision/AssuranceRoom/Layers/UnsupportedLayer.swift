@@ -2,6 +2,10 @@ import Foundation
 import RealityKit
 import UIKit
 
+struct OmegaUserTag: Component {
+    var value: String
+}
+
 struct UnsupportedLayer: LayerProtocol {
     let layerName: String = "Unsupported"
     var isVisible: Bool = true
@@ -38,7 +42,7 @@ struct UnsupportedLayer: LayerProtocol {
             materials: [unsupportedRegionMat]
         )
         unsupported1Region.name = "U1_Region"
-        unsupported1Region.userData.set(true, forKey: "nonSelectable")
+        unsupported1Region.components.set(OmegaUserTag(value: "nonSelectable"))
         unsupported1Region.position = .init(-1.2, yPos, -0.8)
         unsupportedGroup.addChild(unsupported1Region)
         
@@ -57,7 +61,7 @@ struct UnsupportedLayer: LayerProtocol {
             materials: [unsupportedRegionMat]
         )
         unsupported2Region.name = "U2_Region"
-        unsupported2Region.userData.set(true, forKey: "nonSelectable")
+        unsupported2Region.components.set(OmegaUserTag(value: "nonSelectable"))
         unsupported2Region.position = .init(1.2, yPos, 0.8)
         unsupportedGroup.addChild(unsupported2Region)
         

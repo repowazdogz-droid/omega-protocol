@@ -11,6 +11,15 @@ import { putArtifact } from '@spine/artifacts/ArtifactVault';
 import { ArtifactKind } from '@spine/artifacts/ArtifactTypes';
 import { normalizeContactInquiry } from '@spine/artifacts/kinds/ContactInquiry';
 
+// Email configuration
+const TO_EMAIL = process.env.CONTACT_TO_EMAIL ?? 'warrensmith8@ymail.com';
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL ?? 'Omega Protocol <no-reply@omegaprotocol.org>';
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
+
 // In-memory rate limit store (best-effort)
 interface RateLimitEntry {
   count: number;
@@ -72,6 +81,105 @@ function cleanupRateLimit(): void {
   }
 }
 
+/**
+ * Sends email notification for contact form submission.
+ * Uses SMTP if configured via env vars, otherwise logs (for development).
+ */
+async function sendEmailNotification(inquiry: {
+  name?: string;
+  email?: string;
+  org?: string;
+  message: string;
+  domainTags?: string[];
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    // If SMTP is not configured, log and return success (for development)
+    if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+      console.log('[Contact] Email notification (SMTP not configured):', {
+        to: TO_EMAIL,
+        from: FROM_EMAIL,
+        replyTo: inquiry.email || FROM_EMAIL,
+        subject: 'Contact Form Submission - Omega Protocol',
+        inquiry: {
+          name: inquiry.name,
+          email: inquiry.email,
+          org: inquiry.org,
+          message: inquiry.message.substring(0, 100) + '...',
+        },
+      });
+      return { ok: true };
+    }
+
+    // Try to use nodemailer if available, otherwise fall back to logging
+    let nodemailer: any;
+    try {
+      nodemailer = await import('nodemailer');
+    } catch {
+      // nodemailer not installed - log email details
+      console.log('[Contact] Email (nodemailer not installed):', {
+        to: TO_EMAIL,
+        from: FROM_EMAIL,
+        replyTo: inquiry.email || FROM_EMAIL,
+        subject: 'Contact Form Submission - Omega Protocol',
+        body: [
+          `Name: ${inquiry.name || '(not provided)'}`,
+          `Email: ${inquiry.email || '(not provided)'}`,
+          `Organization: ${inquiry.org || '(not provided)'}`,
+          inquiry.domainTags && inquiry.domainTags.length > 0
+            ? `Tags: ${inquiry.domainTags.join(', ')}`
+            : '',
+          '',
+          `Message:`,
+          inquiry.message,
+        ]
+          .filter(Boolean)
+          .join('\n'),
+      });
+      return { ok: true };
+    }
+
+    // Create transporter
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+    });
+
+    // Build email body
+    const emailBody = [
+      `Name: ${inquiry.name || '(not provided)'}`,
+      `Email: ${inquiry.email || '(not provided)'}`,
+      `Organization: ${inquiry.org || '(not provided)'}`,
+      inquiry.domainTags && inquiry.domainTags.length > 0
+        ? `Tags: ${inquiry.domainTags.join(', ')}`
+        : '',
+      '',
+      `Message:`,
+      inquiry.message,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    // Send email
+    await transporter.sendMail({
+      from: FROM_EMAIL,
+      to: TO_EMAIL,
+      replyTo: inquiry.email || FROM_EMAIL,
+      subject: 'Contact Form Submission - Omega Protocol',
+      text: emailBody,
+    });
+
+    return { ok: true };
+  } catch (error: any) {
+    console.error('[Contact] Email send error:', error);
+    return { ok: false, error: error?.message || 'Email send failed' };
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     cleanupRateLimit();
@@ -123,6 +231,11 @@ export async function POST(request: NextRequest) {
       },
       { artifactId }
     );
+
+    // Send email notification (non-blocking, log errors but don't fail request)
+    sendEmailNotification(normalization.normalized).catch((err) => {
+      console.error('[Contact] Email notification failed (non-blocking):', err);
+    });
 
     return NextResponse.json({
       ok: true,

@@ -100,3 +100,7 @@ SAFE ADJACENT HELP: I can help you with a safe alternative approach.
 
 
 
+
+
+
+

@@ -7,7 +7,8 @@ import type { LLMRunArtifactPayload, ArtifactManifest } from "@spine/artifacts/A
 import { OmegaMetaBadge } from "@/app/components/omega/OmegaMetaBadge";
 import { Container } from "../../../(site)/components/Container";
 import { Section } from "../../../(site)/components/Section";
-import { Card } from "../../../(site)/components/Card";
+import UiCard from "../../../ui/UiCard";
+const Card = UiCard;
 import { CopyButton } from "../CopyButton";
 
 function formatIso(iso?: string) {

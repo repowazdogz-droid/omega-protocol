@@ -9,7 +9,8 @@ import type { OmegaMeta } from "@/spine/llm/modes/OmegaMeta";
 import { OmegaMetaBadge } from "@/app/components/omega/OmegaMetaBadge";
 import { Container } from "../../(site)/components/Container";
 import { Section } from "../../(site)/components/Section";
-import { Card } from "../../(site)/components/Card";
+import UiCard from "../../ui/UiCard";
+const Card = UiCard;
 import { FiltersBar } from "./FiltersBar";
 
 function formatIso(iso?: string) {

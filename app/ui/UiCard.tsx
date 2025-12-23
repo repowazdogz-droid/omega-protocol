@@ -9,6 +9,7 @@ interface UiCardProps {
   readingMode?: ReadingMode
   calmMode?: boolean
   style?: React.CSSProperties
+  variant?: string
 }
 
 export default function UiCard({
@@ -35,6 +36,8 @@ export default function UiCard({
     </div>
   )
 }
+
+
 
 
 

@@ -1,15 +1,16 @@
 import '@/app/styles/globals.css'
 import type { Metadata } from 'next'
+import { DevBanner } from './components/DevBanner'
 
 const siteUrl = process.env.SITE_URL || 'http://127.0.0.1:3001'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'OMEGA — Human-led cognitive infrastructure',
-  description: 'Clarity, reasoning, and simplification for complex technical domains — without autonomy, persuasion, or decision substitution.',
+  description: 'Omega Protocol provides structured methods for examining claims, systems, and decisions without prescribing outcomes.',
   openGraph: {
     title: 'OMEGA — Human-led cognitive infrastructure',
-    description: 'Clarity, reasoning, and simplification for complex technical domains — without autonomy, persuasion, or decision substitution.',
+    description: 'Omega Protocol provides structured methods for examining claims, systems, and decisions without prescribing outcomes.',
     url: siteUrl,
     type: 'website',
     images: [
@@ -24,7 +25,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'OMEGA — Human-led cognitive infrastructure',
-    description: 'Clarity, reasoning, and simplification for complex technical domains — without autonomy, persuasion, or decision substitution.',
+    description: 'Omega Protocol provides structured methods for examining claims, systems, and decisions without prescribing outcomes.',
     images: ['/og.png'],
   },
   icons: {
@@ -39,7 +40,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <DevBanner />
+        {children}
+      </body>
     </html>
   )
 }

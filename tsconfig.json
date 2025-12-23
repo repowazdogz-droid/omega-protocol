@@ -46,6 +46,7 @@
     ".next",
     "out",
     "**/*.test.ts",
-    "**/__tests__/**"
+    "**/__tests__/**",
+    "Archive"
   ]
 }

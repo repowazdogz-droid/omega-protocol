@@ -40,3 +40,7 @@ export function wrongConfidence(step: number, startStep: number): number {
 
 
 
+
+
+
+

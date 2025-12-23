@@ -6,7 +6,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "../../../(site)/components/Container";
 import { Section } from "../../../(site)/components/Section";
-import { Card } from "../../../(site)/components/Card";
+import UiCard from "../../../ui/UiCard";
+const Card = UiCard;
 import type { FaultEpisodeAnalysis } from "@/spine/sim/analyzeFaultEpisode";
 
 function fmt(n: number | null | undefined): string {

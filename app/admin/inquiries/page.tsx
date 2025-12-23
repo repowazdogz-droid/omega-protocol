@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Container } from '../../(site)/components/Container';
 import { Section } from '../../(site)/components/Section';
-import { Card } from '../../(site)/components/Card';
+import UiCard from '../../ui/UiCard';
+const Card = UiCard;
 import { OmegaMetaBadge } from '../../components/omega/OmegaMetaBadge';
 import type { OmegaMeta } from '@/spine/llm/modes/OmegaMeta';
 

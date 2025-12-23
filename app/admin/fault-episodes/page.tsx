@@ -4,7 +4,8 @@ import Link from "next/link";
 import { listFaultEpisodeIds } from "@/spine/sim/listFaultEpisodes";
 import { Container } from "../../(site)/components/Container";
 import { Section } from "../../(site)/components/Section";
-import { Card } from "../../(site)/components/Card";
+import UiCard from "../../ui/UiCard";
+const Card = UiCard;
 
 export default async function FaultEpisodesListPage() {
   // listFaultEpisodeIds() handles missing directory gracefully (returns [])
